@@ -1,5 +1,5 @@
 # Dockerfile pour l'Assistant RAG INPT
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Métadonnées
 LABEL maintainer="INPT Smart ICT"
@@ -32,8 +32,8 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
-# Installation spaCy français
-RUN python -m spacy download fr_core_news_md
+# Téléchargement des données NLTK
+RUN python -c "import nltk; nltk.download('punkt', quiet=True)"
 
 # Copie du code source
 COPY . .

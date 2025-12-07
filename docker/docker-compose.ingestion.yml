@@ -1,0 +1,48 @@
+# Docker Compose for Document Ingestion
+version: '3.8'
+
+services:
+  # Ollama Service (for embeddings)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: inpt-ollama-ingestion
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_MODELS=/root/.ollama/models
+    restart: unless-stopped
+
+  # Document Ingestion Service
+  ingestion:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestion
+    container_name: inpt-ingestion
+    volumes:
+      # Mount your documents here
+      - ../data/documents:/app/data/documents:ro
+      # Persistent database
+      - ../database:/app/database
+      # Logs
+      - ../logs:/app/logs
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+      - BATCH_SIZE=32
+      - LOG_LEVEL=INFO
+    depends_on:
+      - ollama
+    # Run once and exit
+    restart: "no"
+
+volumes:
+  ollama_data:
+    driver: local
+
+networks:
+  default:
+    name: inpt-ingestion-network
