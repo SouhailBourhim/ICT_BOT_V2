@@ -130,7 +130,9 @@ def initialize_system():
             hybrid_search=hybrid_search,
             ollama_client=ollama,
             prompt_builder=prompt_builder,
-            min_confidence=settings.SIMILARITY_THRESHOLD
+            min_confidence=settings.SIMILARITY_THRESHOLD,
+            max_sources=settings.RERANK_TOP_K,
+            top_k_retrieval=settings.TOP_K_RETRIEVAL
         )
         
         # 7. Conversation Manager

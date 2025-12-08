@@ -29,7 +29,8 @@ class ResponseGenerator:
         ollama_client,
         prompt_builder,
         min_confidence: float = 0.5,
-        max_sources: int = 5
+        max_sources: int = 3,
+        top_k_retrieval: int = 5
     ):
         """
         Initialise le générateur de réponses
@@ -40,12 +41,14 @@ class ResponseGenerator:
             prompt_builder: Instance de PromptBuilder
             min_confidence: Score minimum pour utiliser un chunk
             max_sources: Nombre max de sources dans la réponse
+            top_k_retrieval: Nombre de chunks à récupérer
         """
         self.hybrid_search = hybrid_search
         self.ollama_client = ollama_client
         self.prompt_builder = prompt_builder
         self.min_confidence = min_confidence
         self.max_sources = max_sources
+        self.top_k_retrieval = top_k_retrieval
         
         logger.info("ResponseGenerator initialisé")
     
@@ -75,7 +78,7 @@ class ResponseGenerator:
         # 1. Recherche hybride
         search_results = self.hybrid_search.search(
             query=question,
-            top_k=10,
+            top_k=self.top_k_retrieval,
             filters=filters
         )
         

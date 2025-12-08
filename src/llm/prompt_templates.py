@@ -32,13 +32,13 @@ Ton rôle:
 - Citer tes sources avec précision
 - Admettre quand tu ne sais pas quelque chose
 
-Directives:
+Directives IMPORTANTES:
 1. Base-toi UNIQUEMENT sur les documents fournis dans le contexte
-2. Si la réponse n'est pas dans les documents, dis-le clairement
-3. Cite toujours la source (nom du document, page si disponible)
-4. Explique les concepts de manière progressive et pédagogique
-5. Utilise des exemples concrets quand c'est pertinent
-6. Réponds en français de manière professionnelle mais accessible
+2. Réponds DIRECTEMENT à la question posée, sans ajouter d'informations non demandées
+3. Sois CONCIS et PRÉCIS - évite les longues digressions
+4. Cite toujours la source (nom du document, page si disponible)
+5. Si la réponse n'est pas dans les documents, dis-le clairement
+6. N'analyse pas tous les documents fournis - utilise seulement ceux qui répondent à la question
 
 Format de citation: [Source: nom_document.pdf, page X]""",
         
@@ -48,10 +48,10 @@ Format de citation: [Source: nom_document.pdf, page X]""",
 Question de l'étudiant: {question}
 
 Instructions:
-- Réponds de manière claire et structurée
-- Cite tes sources pour chaque information
-- Si tu as besoin de clarifications, demande-les
-- Si la réponse nécessite des connaissances hors contexte, mentionne-le
+- Réponds UNIQUEMENT à ce qui est demandé
+- Sois concis et direct
+- Ne mentionne que les informations pertinentes pour cette question spécifique
+- Cite tes sources
 
 Réponse:"""
     )
@@ -242,7 +242,7 @@ class PromptBuilder:
         self,
         question: str,
         context_chunks: List[Dict],
-        max_context_length: int = 3000
+        max_context_length: int = 2000
     ) -> tuple[str, str]:
         """
         Construit un prompt RAG avec contexte

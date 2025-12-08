@@ -43,18 +43,18 @@ class Settings(BaseSettings):
     SQLITE_DB_URL: str = f"sqlite:///{SQLITE_DB_PATH}"
     
     # Retrieval
-    TOP_K_RETRIEVAL: int = 10
-    SIMILARITY_THRESHOLD: float = 0.3  # Seuil de confiance (0.3 = 30%)
+    TOP_K_RETRIEVAL: int = 5  # Réduit de 10 à 5 pour moins de bruit
+    SIMILARITY_THRESHOLD: float = 0.4  # Augmenté de 0.3 à 0.4 pour meilleure qualité
     BM25_WEIGHT: float = 0.3
     SEMANTIC_WEIGHT: float = 0.7
-    RERANK_TOP_K: int = 5
+    RERANK_TOP_K: int = 3  # Réduit de 5 à 3 pour réponses plus focalisées
     
     # Ollama LLM
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3.2:1b"  # Modèle par défaut (ou llama3:latest)
     OLLAMA_TIMEOUT: int = 120
-    LLM_TEMPERATURE: float = 0.7
-    LLM_MAX_TOKENS: int = 2000
+    LLM_TEMPERATURE: float = 0.3  # Réduit de 0.7 à 0.3 pour réponses plus focalisées
+    LLM_MAX_TOKENS: int = 1000  # Réduit de 2000 à 1000 pour réponses plus concises
     
     # Conversation
     MAX_CONVERSATION_HISTORY: int = 10
