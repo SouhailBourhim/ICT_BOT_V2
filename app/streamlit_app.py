@@ -21,6 +21,33 @@ from src.conversation.manager import ConversationManager
 
 from datetime import datetime
 from loguru import logger
+import re
+
+
+def render_math_content(text: str):
+    """
+    Rend le contenu avec support LaTeX pour les formules mathématiques.
+    Détecte les formules entre [ ] et les affiche correctement.
+    """
+    # Remplacer toutes les formules [ ... ] par $$ ... $$
+    # Pattern: [ suivi de n'importe quoi jusqu'à ]
+    text = re.sub(r'\[\s*([^\]]+?)\s*\]', r'$$\1$$', text)
+    
+    # Diviser le texte en parties: texte normal et formules
+    parts = re.split(r'(\$\$.*?\$\$)', text, flags=re.DOTALL)
+    
+    for part in parts:
+        if part.startswith('$$') and part.endswith('$$'):
+            # C'est une formule LaTeX
+            formula = part[2:-2].strip()
+            try:
+                st.latex(formula)
+            except Exception as e:
+                # Si erreur LaTeX, afficher comme texte
+                st.markdown(f"`{formula}`")
+        elif part.strip():
+            # C'est du texte normal
+            st.markdown(part)
 
 
 # Configuration de la page
@@ -244,7 +271,7 @@ def render_main_chat(system):
     # Afficher l'historique
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            render_math_content(message["content"])
             
             # Afficher les sources si présentes
             if "sources" in message and message["sources"]:
@@ -256,7 +283,7 @@ def render_main_chat(system):
         st.session_state.messages.append({"role": "user", "content": prompt})
         
         with st.chat_message("user"):
-            st.markdown(prompt)
+            render_math_content(prompt)
         
         # Générer la réponse
         with st.chat_message("assistant"):
@@ -274,7 +301,7 @@ def render_main_chat(system):
                 )
                 
                 # Afficher la réponse
-                st.markdown(response.answer)
+                render_math_content(response.answer)
                 
                 # Afficher les sources
                 if response.sources:
