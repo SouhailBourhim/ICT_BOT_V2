@@ -18,13 +18,14 @@ from src.llm.ollama_client import OllamaClient
 from src.llm.prompt_templates import PromptBuilder
 from src.llm.response_generator import ResponseGenerator
 from src.conversation.manager import ConversationManager
+from app.components.math_renderer import render_math_content
 
 from datetime import datetime
 from loguru import logger
 import re
 
 
-def render_math_content(text: str):
+def render_math_content_old(text: str):
     """
     Rend le contenu avec support LaTeX pour les formules mathématiques.
     Détecte plusieurs formats et nettoie les erreurs de formatage.
