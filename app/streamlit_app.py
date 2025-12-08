@@ -27,13 +27,18 @@ import re
 def render_math_content(text: str):
     """
     Rend le contenu avec support LaTeX pour les formules mathématiques.
-    Détecte les formules entre [ ] et les affiche correctement.
+    Détecte les formules entre [ ], entre \\ et aussi les formules inline.
     """
-    # Remplacer toutes les formules [ ... ] par $$ ... $$
-    # Pattern: [ suivi de n'importe quoi jusqu'à ]
+    # 1. Remplacer les formules entre crochets [ ... ] par $$ ... $$
     text = re.sub(r'\[\s*([^\]]+?)\s*\]', r'$$\1$$', text)
     
-    # Diviser le texte en parties: texte normal et formules
+    # 2. Détecter les formules LaTeX inline (commençant par \text{, \frac{, etc.)
+    # Pattern: \commande{...} ou \commande[...]{...} suivie d'autres commandes LaTeX
+    # On cherche des séquences qui ressemblent à du LaTeX
+    latex_pattern = r'(\\text\{[^}]+\}\s*=\s*\\[a-z]+\{[^}]+\}[^.!?\n]*)'
+    text = re.sub(latex_pattern, r'$$\1$$', text)
+    
+    # 3. Diviser le texte en parties: texte normal et formules
     parts = re.split(r'(\$\$.*?\$\$)', text, flags=re.DOTALL)
     
     for part in parts:
@@ -43,8 +48,8 @@ def render_math_content(text: str):
             try:
                 st.latex(formula)
             except Exception as e:
-                # Si erreur LaTeX, afficher comme texte
-                st.markdown(f"`{formula}`")
+                # Si erreur LaTeX, afficher comme code
+                st.code(formula, language='latex')
         elif part.strip():
             # C'est du texte normal
             st.markdown(part)

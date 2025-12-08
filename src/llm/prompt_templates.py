@@ -33,6 +33,12 @@ RÈGLES STRICTES:
 4. Si tu ne trouves pas l'info, dis "Information non trouvée dans le document"
 5. Maximum 3-4 phrases courtes
 
+FORMULES MATHÉMATIQUES - TRÈS IMPORTANT:
+- TOUJOURS mettre les formules entre crochets [ ]
+- Exemple: La formule MSE est [ \\text{MSE} = \\frac{1}{n} \\sum_{i=1}^{n} (\\hat{Y}_i - Y_i)^2 ]
+- Exemple simple: [ E = mc^2 ]
+- Ne JAMAIS écrire les formules en texte brut
+
 DISTINCTION IMPORTANTE:
 - Noms d'algorithmes/méthodes dans le contexte → CITE-LES
 - Exemples d'application non dans le contexte → N'INVENTE PAS
