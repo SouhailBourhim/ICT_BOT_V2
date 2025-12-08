@@ -52,6 +52,85 @@ class ResponseGenerator:
         
         logger.info("ResponseGenerator initialisé")
     
+    def _is_follow_up_question(self, question: str, conversation_history: List[Dict]) -> bool:
+        """
+        Détecte si la question est une question de suivi liée au contexte précédent
+        
+        Args:
+            question: Question actuelle
+            conversation_history: Historique de conversation
+            
+        Returns:
+            True si c'est une question de suivi, False sinon
+        """
+        if not conversation_history or len(conversation_history) < 2:
+            return False
+        
+        question_lower = question.lower().strip()
+        
+        # 1. Indicateurs de question de suivi (pronoms, références)
+        follow_up_indicators = [
+            # Pronoms démonstratifs
+            r'\b(cela|ça|ce|cette|cet|ces)\b',
+            # Pronoms personnels en début
+            r'^(il|elle|ils|elles|le|la|les|lui|leur)\b',
+            # Questions courtes de clarification
+            r'^(et|mais|donc|alors|aussi|également)\b',
+            # Références directes
+            r'\b(même|aussi|également|pareil)\b',
+            # Questions très courtes (< 4 mots souvent des suivis)
+            r'^\w+\s+\w+\s*\??$',
+            # "Et pour..." / "Et le..."
+            r'^et\s+(pour|le|la|les)\b',
+            # "Plus de détails" / "Explique plus"
+            r'\b(plus|davantage|encore|autre)\s+(de|d\'|sur)\b',
+            # Questions avec "?" seulement
+            r'^\w+\s*\?$'
+        ]
+        
+        for pattern in follow_up_indicators:
+            if re.search(pattern, question_lower):
+                logger.info(f"🔗 Question de suivi détectée (pattern: {pattern})")
+                return True
+        
+        # 2. Extraire les mots-clés de la dernière question
+        if len(conversation_history) >= 2:
+            last_user_msg = None
+            for msg in reversed(conversation_history):
+                if msg.get('role') == 'user':
+                    last_user_msg = msg.get('content', '')
+                    break
+            
+            if last_user_msg:
+                # Extraire les noms propres et termes techniques (mots en majuscules ou avec acronymes)
+                last_keywords = set(re.findall(r'\b[A-Z]{2,}\b|\b[A-Z][a-z]+\b', last_user_msg))
+                current_keywords = set(re.findall(r'\b[A-Z]{2,}\b|\b[A-Z][a-z]+\b', question))
+                
+                # Si partage des mots-clés importants
+                if last_keywords and current_keywords:
+                    overlap = last_keywords.intersection(current_keywords)
+                    if overlap:
+                        logger.info(f"🔗 Question de suivi détectée (mots-clés communs: {overlap})")
+                        return True
+        
+        # 3. Question complète et indépendante (contient verbe + sujet complet)
+        # Si la question est longue et bien formée, c'est probablement une nouvelle question
+        if len(question.split()) > 6:
+            # Vérifier si contient des mots interrogatifs complets
+            complete_question_patterns = [
+                r'\b(qu\'est-ce que|c\'est quoi|quelle est|quel est|quels sont|quelles sont)\b',
+                r'\b(comment|pourquoi|où|quand|combien)\b.*\b(le|la|les|un|une|des)\b',
+                r'\b(expliquer|définir|décrire|présenter)\b.*\b(le|la|les)\b'
+            ]
+            
+            for pattern in complete_question_patterns:
+                if re.search(pattern, question_lower):
+                    logger.info(f"❌ Question indépendante détectée (question complète)")
+                    return False
+        
+        # Par défaut, si aucun indicateur fort, considérer comme indépendante
+        return False
+    
     def generate_response(
         self,
         question: str,
@@ -75,7 +154,14 @@ class ResponseGenerator:
         """
         logger.info(f"🎯 Génération de réponse pour: '{question[:50]}...'")
         
-        # 1. Recherche hybride
+        # 1. Détection intelligente de question de suivi
+        use_history = False
+        if conversation_history:
+            use_history = self._is_follow_up_question(question, conversation_history)
+            if not use_history:
+                logger.info("🆕 Question indépendante détectée - historique ignoré")
+        
+        # 2. Recherche hybride
         search_results = self.hybrid_search.search(
             query=question,
             top_k=self.top_k_retrieval,
@@ -85,14 +171,14 @@ class ResponseGenerator:
         if not search_results:
             return self._generate_no_context_response(question)
         
-        # 2. Filtrage par confiance
+        # 3. Filtrage par confiance
         relevant_chunks = self._filter_by_confidence(search_results)
         
         if not relevant_chunks:
             return self._generate_low_confidence_response(question, search_results)
         
-        # 3. Construction du prompt
-        if conversation_history:
+        # 4. Construction du prompt (avec ou sans historique selon détection)
+        if use_history:
             system_prompt, user_prompt = self.prompt_builder.build_conversation_prompt(
                 question=question,
                 context_chunks=relevant_chunks,
@@ -141,7 +227,8 @@ class ResponseGenerator:
                 'num_chunks_retrieved': len(search_results),
                 'num_chunks_used': len(relevant_chunks),
                 'question': question,
-                'has_conversation_history': conversation_history is not None
+                'has_conversation_history': conversation_history is not None,
+                'used_conversation_history': use_history
             }
         )
     
