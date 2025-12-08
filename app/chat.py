@@ -214,18 +214,6 @@ def render_sidebar(system):
         st.markdown("**Smart ICT - Système d'aide éducative**")
         st.markdown("---")
         
-        # Informations système
-        with st.expander("📊 Informations Système", expanded=False):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.metric("Documents", system['vector_store'].count())
-                st.metric("Modèle", settings.OLLAMA_MODEL.split(':')[0])
-            
-            with col2:
-                st.metric("Langue", settings.LANGUAGE.upper())
-                st.metric("Version", settings.VERSION)
-        
         # Gestion des conversations
         st.markdown("### 💬 Conversations")
         
