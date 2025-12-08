@@ -27,27 +27,31 @@ import re
 def render_math_content(text: str):
     """
     Rend le contenu avec support LaTeX pour les formules mathématiques.
-    Détecte plusieurs formats: [ ], \\text{...} = ..., et \( ... \)
+    Détecte plusieurs formats et nettoie les erreurs de formatage.
     """
+    # 0. Nettoyer les caractères Unicode bizarres et doublons
+    text = re.sub(r'Y\^iY\^i​', r'\\hat{Y}_i', text)
+    text = re.sub(r'YiYi​', r'Y_i', text)
+    text = re.sub(r'nnest', r'$n$ est', text)
+    
     # 1. Remplacer les formules entre crochets [ ... ] par $$ ... $$
     text = re.sub(r'\[\s*([^\]]+?)\s*\]', r'$$\1$$', text)
     
-    # 2. Remplacer \( ... \) par $$ ... $$ (format LaTeX inline)
+    # 2. Remplacer \( ... \) et \[ ... \] par $$ ... $$
     text = re.sub(r'\\\(\s*([^)]+?)\s*\\\)', r'$$\1$$', text)
+    text = re.sub(r'\\\[\s*([^\]]+?)\s*\\\]', r'$$\1$$', text)
     
-    # 3. Détecter les formules LaTeX qui commencent par \text{ ou \frac{ et contiennent =
-    # Pattern: cherche du LaTeX qui ressemble à une équation
-    # Exemple: \text{MSE} = \frac{1}{n} \sum_{i=1}^{n} ...
-    latex_equation_pattern = r'(\\(?:text|frac|sum|int|sqrt)\{[^}]*\}(?:\s*[=<>]\s*|_\{[^}]*\}|\^\{[^}]*\}|\\[a-z]+\{[^}]*\}|\s)+[^\n.!?]*?)(?=\s*(?:où|Où|\.|\n|$))'
+    # 3. Détecter les formules qui commencent par \text{ ou \frac{ avec =
+    # Pattern plus agressif pour capturer toutes les formules
+    latex_equation_pattern = r'(\\(?:text|frac|sum|int|sqrt|hat)\{[^}]*\}[^a-zA-Z\n]*?(?:=|\\sum|\\int|\\frac)[^\n]*?)(?=\s*(?:où|Où|Cette|Pour|La|Le|\.|,|\n|$))'
     
     def wrap_latex(match):
         formula = match.group(1).strip()
-        # Vérifier si déjà entouré de $$
         if not formula.startswith('$$'):
-            return f'$${formula}$$'
+            return f'$$\n{formula}\n$$'
         return formula
     
-    text = re.sub(latex_equation_pattern, wrap_latex, text)
+    text = re.sub(latex_equation_pattern, wrap_latex, text, flags=re.MULTILINE)
     
     # 4. Diviser le texte en parties: texte normal et formules
     parts = re.split(r'(\$\$.*?\$\$)', text, flags=re.DOTALL)
@@ -56,6 +60,8 @@ def render_math_content(text: str):
         if part.startswith('$$') and part.endswith('$$'):
             # C'est une formule LaTeX
             formula = part[2:-2].strip()
+            # Nettoyer la formule
+            formula = formula.replace('\\', '\\')  # Normaliser les backslashes
             try:
                 st.latex(formula)
             except Exception as e:

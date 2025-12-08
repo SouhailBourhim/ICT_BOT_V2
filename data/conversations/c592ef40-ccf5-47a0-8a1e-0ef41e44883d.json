@@ -1,0 +1,18 @@
+{
+  "id": "c592ef40-ccf5-47a0-8a1e-0ef41e44883d",
+  "title": "Conversation 08/12/2025 14:27",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "Information non trouvée dans le document",
+      "timestamp": "2025-12-08T14:27:08.417322",
+      "metadata": {
+        "confidence": 0.29810753067438117,
+        "num_sources": 1
+      }
+    }
+  ],
+  "created_at": "2025-12-08T14:27:08.416930",
+  "updated_at": "2025-12-08T14:27:08.417326",
+  "metadata": {}
+}
