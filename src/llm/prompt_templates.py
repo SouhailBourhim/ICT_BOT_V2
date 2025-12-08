@@ -49,10 +49,11 @@ QUESTION: {question}
 
 INSTRUCTIONS:
 - Réponds DIRECTEMENT à la question
-- Liste UNIQUEMENT les éléments pertinents du contexte
-- Format: liste simple ou 2-3 phrases
+- Si c'est une liste/énumération, donne une brève description de chaque élément
+- Si c'est une définition, donne 3-4 phrases complètes
+- Mentionne toujours les concepts clés
 - Ne mentionne PAS les numéros de documents
-- N'ajoute PAS "Information non trouvée" si tu as déjà donné une réponse
+- Format clair et structuré
 
 RÉPONSE DIRECTE:"""
     )

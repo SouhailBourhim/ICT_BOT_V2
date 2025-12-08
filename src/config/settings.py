@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     SQLITE_DB_URL: str = f"sqlite:///{SQLITE_DB_PATH}"
     
     # Retrieval
-    TOP_K_RETRIEVAL: int = 5  # Réduit de 10 à 5 pour moins de bruit
+    TOP_K_RETRIEVAL: int = 7  # Augmenté pour meilleur concept coverage
     SIMILARITY_THRESHOLD: float = 0.4  # Augmenté de 0.3 à 0.4 pour meilleure qualité
     BM25_WEIGHT: float = 0.3
     SEMANTIC_WEIGHT: float = 0.7
@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "qwen2.5:3b"  # Meilleur pour RAG, moins d'hallucinations
     OLLAMA_TIMEOUT: int = 180  # Plus long pour 3B params
     LLM_TEMPERATURE: float = 0.1  # Légèrement plus créatif que 0.0
-    LLM_MAX_TOKENS: int = 400  # Un peu plus pour réponses complètes
+    LLM_MAX_TOKENS: int = 500  # Augmenté pour réponses plus complètes
     
     # Conversation
     MAX_CONVERSATION_HISTORY: int = 10
