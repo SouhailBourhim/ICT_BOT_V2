@@ -27,18 +27,29 @@ import re
 def render_math_content(text: str):
     """
     Rend le contenu avec support LaTeX pour les formules mathématiques.
-    Détecte les formules entre [ ], entre \\ et aussi les formules inline.
+    Détecte plusieurs formats: [ ], \\text{...} = ..., et \( ... \)
     """
     # 1. Remplacer les formules entre crochets [ ... ] par $$ ... $$
     text = re.sub(r'\[\s*([^\]]+?)\s*\]', r'$$\1$$', text)
     
-    # 2. Détecter les formules LaTeX inline (commençant par \text{, \frac{, etc.)
-    # Pattern: \commande{...} ou \commande[...]{...} suivie d'autres commandes LaTeX
-    # On cherche des séquences qui ressemblent à du LaTeX
-    latex_pattern = r'(\\text\{[^}]+\}\s*=\s*\\[a-z]+\{[^}]+\}[^.!?\n]*)'
-    text = re.sub(latex_pattern, r'$$\1$$', text)
+    # 2. Remplacer \( ... \) par $$ ... $$ (format LaTeX inline)
+    text = re.sub(r'\\\(\s*([^)]+?)\s*\\\)', r'$$\1$$', text)
     
-    # 3. Diviser le texte en parties: texte normal et formules
+    # 3. Détecter les formules LaTeX qui commencent par \text{ ou \frac{ et contiennent =
+    # Pattern: cherche du LaTeX qui ressemble à une équation
+    # Exemple: \text{MSE} = \frac{1}{n} \sum_{i=1}^{n} ...
+    latex_equation_pattern = r'(\\(?:text|frac|sum|int|sqrt)\{[^}]*\}(?:\s*[=<>]\s*|_\{[^}]*\}|\^\{[^}]*\}|\\[a-z]+\{[^}]*\}|\s)+[^\n.!?]*?)(?=\s*(?:où|Où|\.|\n|$))'
+    
+    def wrap_latex(match):
+        formula = match.group(1).strip()
+        # Vérifier si déjà entouré de $$
+        if not formula.startswith('$$'):
+            return f'$${formula}$$'
+        return formula
+    
+    text = re.sub(latex_equation_pattern, wrap_latex, text)
+    
+    # 4. Diviser le texte en parties: texte normal et formules
     parts = re.split(r'(\$\$.*?\$\$)', text, flags=re.DOTALL)
     
     for part in parts:
