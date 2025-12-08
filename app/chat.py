@@ -292,12 +292,28 @@ def render_main_chat(system):
     st.markdown('<div class="main-header">🎓 Assistant Éducatif Smart ICT</div>', unsafe_allow_html=True)
     
     # Initialiser la session
-    if 'messages' not in st.session_state:
-        st.session_state.messages = []
-    
     if 'current_conv_id' not in st.session_state:
         conv = system['conv_manager'].create_conversation()
         st.session_state.current_conv_id = conv.id
+        st.session_state.messages = []
+    
+    # Charger les messages de la conversation actuelle
+    if 'messages' not in st.session_state or 'last_loaded_conv_id' not in st.session_state or st.session_state.last_loaded_conv_id != st.session_state.current_conv_id:
+        # Charger l'historique de la conversation
+        conv = system['conv_manager'].load_conversation(st.session_state.current_conv_id)
+        if conv and conv.messages:
+            st.session_state.messages = [
+                {
+                    "role": msg.role,
+                    "content": msg.content,
+                    "sources": msg.metadata.get('sources', []) if hasattr(msg, 'metadata') and msg.metadata else [],
+                    "confidence": msg.metadata.get('confidence', 0.0) if hasattr(msg, 'metadata') and msg.metadata else 0.0
+                }
+                for msg in conv.messages
+            ]
+        else:
+            st.session_state.messages = []
+        st.session_state.last_loaded_conv_id = st.session_state.current_conv_id
     
     # Afficher l'historique
     for message in st.session_state.messages:
