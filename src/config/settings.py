@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     LLM_MAX_TOKENS: int = 500  # Augmenté pour réponses plus complètes
     
     # Conversation
-    MAX_CONVERSATION_HISTORY: int = 10
+    MAX_CONVERSATION_HISTORY: int = 6  # Réduit de 10 à 6 pour éviter la pollution du contexte
     CONTEXT_WINDOW_SIZE: int = 4096
     
     # Query Enhancement
