@@ -44,14 +44,14 @@ class Settings(BaseSettings):
     
     # Retrieval
     TOP_K_RETRIEVAL: int = 10
-    SIMILARITY_THRESHOLD: float = 0.7
+    SIMILARITY_THRESHOLD: float = 0.3  # Seuil de confiance (0.3 = 30%)
     BM25_WEIGHT: float = 0.3
     SEMANTIC_WEIGHT: float = 0.7
     RERANK_TOP_K: int = 5
     
     # Ollama LLM
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3.2:3b"  # Modèle par défaut
+    OLLAMA_MODEL: str = "llama3.2:1b"  # Modèle par défaut (ou llama3:latest)
     OLLAMA_TIMEOUT: int = 120
     LLM_TEMPERATURE: float = 0.7
     LLM_MAX_TOKENS: int = 2000

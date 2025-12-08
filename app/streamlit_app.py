@@ -94,6 +94,27 @@ def initialize_system():
             bm25_weight=settings.BM25_WEIGHT
         )
         
+        # Indexer tous les documents pour BM25
+        doc_count = vector_store.count()
+        if doc_count > 0:
+            logger.info(f"Indexation BM25 de {doc_count} documents...")
+            all_docs = vector_store.peek(limit=doc_count)
+            if all_docs and all_docs.get('documents'):
+                documents = [
+                    {
+                        'id': doc_id,
+                        'text': text,
+                        'metadata': meta
+                    }
+                    for doc_id, text, meta in zip(
+                        all_docs['ids'],
+                        all_docs['documents'],
+                        all_docs['metadatas']
+                    )
+                ]
+                hybrid_search.index_documents(documents)
+                logger.success(f"✅ Index BM25 créé avec {len(documents)} documents")
+        
         # 4. Ollama Client
         ollama = OllamaClient(
             base_url=settings.OLLAMA_BASE_URL,

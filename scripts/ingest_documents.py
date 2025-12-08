@@ -107,9 +107,14 @@ class DocumentIngestion:
             metadatas = []
             ids = []
             
-            for chunk in chunks:
+            # Generate unique IDs
+            import uuid
+            for i, chunk in enumerate(chunks):
+                # Create unique ID using filename and index
+                unique_id = f"{file_path.stem}_{i}_{uuid.uuid4().hex[:8]}"
+                
                 metadatas.append({
-                    'chunk_id': chunk.chunk_id,
+                    'chunk_id': unique_id,
                     'filename': chunk.metadata.get('filename'),
                     'filepath': chunk.metadata.get('filepath'),
                     'page_number': chunk.metadata.get('page_number', ''),
@@ -119,7 +124,7 @@ class DocumentIngestion:
                     'token_count': chunk.token_count,
                     'format': chunk.metadata.get('format'),
                 })
-                ids.append(chunk.chunk_id)
+                ids.append(unique_id)
             
             # 5. Ajout au vector store
             self.vector_store.add_documents(
