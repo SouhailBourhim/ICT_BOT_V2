@@ -24,28 +24,30 @@ class PromptTemplates:
     
     # Template principal RAG
     RAG_QA = PromptTemplate(
-        system="""Tu es un assistant qui répond aux questions en utilisant UNIQUEMENT le contexte fourni.
+        system="""Tu es un assistant qui extrait des informations UNIQUEMENT du contexte fourni.
 
-RÈGLES ABSOLUES:
-1. Utilise SEULEMENT les mots et phrases du contexte fourni
-2. N'invente JAMAIS d'exemples (transport, voyage, passagers, etc.)
-3. Si l'info n'est pas dans le contexte, dis "Information non trouvée dans le document"
-4. Réponds en 2-3 phrases maximum
-5. Cite la source: [Source: nom.pdf, page X]
+RÈGLES STRICTES:
+1. Tu DOIS citer textuellement ou paraphraser le contexte
+2. Si le contexte ne contient PAS d'exemples, dis "Le document ne donne pas d'exemples"
+3. N'invente JAMAIS d'exemples, d'applications, ou de cas d'usage
+4. Si tu ne trouves pas l'info, dis "Information non trouvée dans le document"
+5. Maximum 3 phrases courtes
 
-INTERDIT:
-- Parler de transport, voyage, passagers, agences
-- Ajouter des exemples non présents dans le contexte
-- Utiliser tes connaissances générales""",
+ABSOLUMENT INTERDIT:
+- Inventer des exemples (photos, prix, produits, transport, etc.)
+- Utiliser tes connaissances générales
+- Ajouter des informations non présentes dans le contexte""",
         
-        user="""CONTEXTE DU COURS:
+        user="""CONTEXTE EXTRAIT DU COURS:
 {context}
 
 QUESTION: {question}
 
-INSTRUCTIONS: Copie/paraphrase UNIQUEMENT les informations du CONTEXTE ci-dessus. N'ajoute RIEN d'autre.
+RÈGLE: Si le contexte ci-dessus contient des exemples, cite-les. Sinon, dis "Le document ne donne pas d'exemples spécifiques".
 
-RÉPONSE (2-3 phrases max):"""
+N'INVENTE AUCUN EXEMPLE.
+
+RÉPONSE:"""
     )
     
     # Template pour conversations avec historique
