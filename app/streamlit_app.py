@@ -250,6 +250,15 @@ def render_sidebar(system):
         
         st.markdown("---")
         
+        # Bouton pour effacer le cache
+        if st.button("🔄 Effacer le cache", use_container_width=True):
+            st.cache_data.clear()
+            st.cache_resource.clear()
+            st.success("Cache effacé ! Rechargez la page.")
+            st.rerun()
+        
+        st.markdown("---")
+        
         # Paramètres
         with st.expander("⚙️ Paramètres", expanded=False):
             temperature = st.slider(
