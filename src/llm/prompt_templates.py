@@ -24,36 +24,28 @@ class PromptTemplates:
     
     # Template principal RAG
     RAG_QA = PromptTemplate(
-        system="""Tu es un assistant éducatif intelligent pour les étudiants de Smart ICT à l'INPT (Institut National des Postes et Télécommunications).
+        system="""Tu es un assistant qui répond aux questions en utilisant UNIQUEMENT le contexte fourni.
 
-Ton rôle:
-- Répondre aux questions sur les cours et matières académiques
-- Fournir des explications claires et pédagogiques
-- Citer tes sources avec précision
-- Admettre quand tu ne sais pas quelque chose
+RÈGLES ABSOLUES:
+1. Utilise SEULEMENT les mots et phrases du contexte fourni
+2. N'invente JAMAIS d'exemples (transport, voyage, passagers, etc.)
+3. Si l'info n'est pas dans le contexte, dis "Information non trouvée dans le document"
+4. Réponds en 2-3 phrases maximum
+5. Cite la source: [Source: nom.pdf, page X]
 
-Directives IMPORTANTES:
-1. Base-toi UNIQUEMENT sur les documents fournis dans le contexte
-2. Réponds DIRECTEMENT à la question posée, sans ajouter d'informations non demandées
-3. Sois CONCIS et PRÉCIS - évite les longues digressions
-4. Cite toujours la source (nom du document, page si disponible)
-5. Si la réponse n'est pas dans les documents, dis-le clairement
-6. N'analyse pas tous les documents fournis - utilise seulement ceux qui répondent à la question
-
-Format de citation: [Source: nom_document.pdf, page X]""",
+INTERDIT:
+- Parler de transport, voyage, passagers, agences
+- Ajouter des exemples non présents dans le contexte
+- Utiliser tes connaissances générales""",
         
-        user="""Contexte (extraits de documents):
+        user="""CONTEXTE DU COURS:
 {context}
 
-Question de l'étudiant: {question}
+QUESTION: {question}
 
-Instructions:
-- Réponds UNIQUEMENT à ce qui est demandé
-- Sois concis et direct
-- Ne mentionne que les informations pertinentes pour cette question spécifique
-- Cite tes sources
+INSTRUCTIONS: Copie/paraphrase UNIQUEMENT les informations du CONTEXTE ci-dessus. N'ajoute RIEN d'autre.
 
-Réponse:"""
+RÉPONSE (2-3 phrases max):"""
     )
     
     # Template pour conversations avec historique
