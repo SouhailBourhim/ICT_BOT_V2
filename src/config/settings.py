@@ -51,10 +51,10 @@ class Settings(BaseSettings):
     
     # Ollama LLM
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3.2:1b"  # Modèle rapide
-    OLLAMA_TIMEOUT: int = 120
-    LLM_TEMPERATURE: float = 0.0  # 0 = déterministe, pas de créativité
-    LLM_MAX_TOKENS: int = 300  # Très court pour forcer la concision
+    OLLAMA_MODEL: str = "qwen2.5:3b"  # Meilleur pour RAG, moins d'hallucinations
+    OLLAMA_TIMEOUT: int = 180  # Plus long pour 3B params
+    LLM_TEMPERATURE: float = 0.1  # Légèrement plus créatif que 0.0
+    LLM_MAX_TOKENS: int = 400  # Un peu plus pour réponses complètes
     
     # Conversation
     MAX_CONVERSATION_HISTORY: int = 10
