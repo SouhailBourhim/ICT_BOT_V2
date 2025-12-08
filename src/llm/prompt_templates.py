@@ -35,7 +35,7 @@ RÈGLES STRICTES:
 
 FORMULES MATHÉMATIQUES - TRÈS IMPORTANT:
 - TOUJOURS mettre les formules entre crochets [ ]
-- Exemple: La formule MSE est [ \\text{MSE} = \\frac{1}{n} \\sum_{i=1}^{n} (\\hat{Y}_i - Y_i)^2 ]
+- Exemple: La formule MSE est [ \\text{{MSE}} = \\frac{{1}}{{n}} \\sum_{{i=1}}^{{n}} (\\hat{{Y}}_i - Y_i)^2 ]
 - Exemple simple: [ E = mc^2 ]
 - Ne JAMAIS écrire les formules en texte brut
 
