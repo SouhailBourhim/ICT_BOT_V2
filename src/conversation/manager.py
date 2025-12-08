@@ -112,10 +112,18 @@ class ConversationManager:
         # Récupérer ou créer une conversation
         if conversation_id:
             conversation = self.load_conversation(conversation_id)
+            if not conversation:
+                logger.warning(f"Conversation {conversation_id} non trouvée, création d'une nouvelle")
+                conversation = self.create_conversation()
         else:
             conversation = self.current_conversation
             if not conversation:
                 conversation = self.create_conversation()
+        
+        # Vérification de sécurité
+        if not conversation or not hasattr(conversation, 'messages'):
+            logger.error("Conversation invalide, création d'une nouvelle")
+            conversation = self.create_conversation()
         
         # Créer le message
         message = Message(

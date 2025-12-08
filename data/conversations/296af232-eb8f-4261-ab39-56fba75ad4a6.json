@@ -1,0 +1,24 @@
+{
+  "id": "296af232-eb8f-4261-ab39-56fba75ad4a6",
+  "title": "donne moi des exemples d'algorithmes d'apprentissa...",
+  "messages": [
+    {
+      "role": "user",
+      "content": "donne moi des exemples d'algorithmes d'apprentissage non supérvisé",
+      "timestamp": "2025-12-08T10:20:32.961763",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "Voici les informations extraites du contexte : * Le Document 1 mentionne l'Arbre de décision et le Support Vector Machine (SVM) comme algorithmes d'apprentissage non supérvisé. * Le Document 2 mentionne le Support Vector Machine (SVM) comme un exemple d'algorithme d'apprentissage non supérvisé. * Le Document 3 n'a pas de mention spécifique des algorithmes d'apprentissage non supérvisés, mais mentionne plutôt les exemples de clustering et la réduction de dimension. * Le Document 4 mentionne le RandomForest comme un exemple d'algorithme d'apprentissage ensemble. Exemples d'algorithmes d'apprentissage non supérvisé : * Arbre de décision * Support Vector Machine (SVM) * RandomForest",
+      "timestamp": "2025-12-08T10:20:32.962660",
+      "metadata": {
+        "confidence": 1.0,
+        "num_sources": 1
+      }
+    }
+  ],
+  "created_at": "2025-12-08T10:19:36.103063",
+  "updated_at": "2025-12-08T10:20:32.962664",
+  "metadata": {}
+}
