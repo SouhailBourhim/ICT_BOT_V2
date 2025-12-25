@@ -9,10 +9,17 @@ from datetime import datetime
 import re
 
 import pypdf
-from docx import Document as DocxDocument
 import markdown
 from bs4 import BeautifulSoup
 from loguru import logger
+
+try:
+    from docx import Document as DocxDocument
+    DOCX_AVAILABLE = True
+except ImportError:
+    logger.warning("python-docx not available - DOCX support disabled")
+    DocxDocument = None
+    DOCX_AVAILABLE = False
 
 
 @dataclass
@@ -167,6 +174,10 @@ class DocumentParser:
     
     def _parse_docx(self, file_path: Path) -> tuple:
         """Parse un document Word DOCX"""
+        if not DOCX_AVAILABLE:
+            logger.error("DOCX parsing not available - python-docx not installed")
+            return "", {"format": "docx", "error": "python-docx not available"}, None
+            
         try:
             doc = DocxDocument(file_path)
             

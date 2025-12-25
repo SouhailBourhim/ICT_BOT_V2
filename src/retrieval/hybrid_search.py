@@ -7,6 +7,9 @@ import numpy as np
 from rank_bm25 import BM25Okapi
 from loguru import logger
 
+# Import compatibility layer
+from ..storage.compatibility import compatibility_layer
+
 
 @dataclass
 class SearchResult:
@@ -146,7 +149,7 @@ class HybridSearchEngine:
         n_results: int,
         filters: Optional[Dict] = None
     ) -> List[SearchResult]:
-        """Recherche sémantique via vector store"""
+        """Recherche sémantique via vector store avec support de compatibilité"""
         try:
             results = self.vector_store.search(
                 query_text=query,
@@ -154,25 +157,54 @@ class HybridSearchEngine:
                 where=filters
             )
             
-            # Conversion en SearchResult
-            search_results = []
-            for i, (doc_id, text, metadata, distance) in enumerate(zip(
-                results['ids'],
-                results['documents'],
-                results['metadatas'],
-                results['distances']
-            )):
-                # Conversion distance -> similarité [0, 1]
-                similarity = 1 / (1 + distance)
+            # Use normalized results if available (from compatibility layer)
+            if 'normalized_results' in results:
+                normalized_data = results['normalized_results']
+                search_results = []
                 
-                search_results.append(SearchResult(
-                    doc_id=doc_id,
-                    text=text,
-                    metadata=metadata,
-                    score=similarity,
-                    semantic_score=similarity,
-                    rank=i + 1
-                ))
+                for i, result_data in enumerate(normalized_data):
+                    # Conversion distance -> similarité [0, 1]
+                    distance = result_data.get('distance', 0.0)
+                    similarity = 1 / (1 + distance)
+                    
+                    # Use clean content for BM25 but keep full content for display
+                    clean_content = result_data.get('clean_content', result_data.get('content', ''))
+                    display_content = result_data.get('content', '')
+                    
+                    search_results.append(SearchResult(
+                        doc_id=result_data.get('id', ''),
+                        text=display_content,  # Full content with headers for display
+                        metadata={
+                            **result_data.get('metadata', {}),
+                            'clean_content': clean_content,  # Clean content for processing
+                            'has_contextual_header': result_data.get('has_contextual_header', False),
+                            'display_title': result_data.get('display_title', ''),
+                            'chunk_format': result_data.get('chunk_format', 'unknown')
+                        },
+                        score=similarity,
+                        semantic_score=similarity,
+                        rank=i + 1
+                    ))
+            else:
+                # Fallback to original format
+                search_results = []
+                for i, (doc_id, text, metadata, distance) in enumerate(zip(
+                    results['ids'],
+                    results['documents'],
+                    results['metadatas'],
+                    results['distances']
+                )):
+                    # Conversion distance -> similarité [0, 1]
+                    similarity = 1 / (1 + distance)
+                    
+                    search_results.append(SearchResult(
+                        doc_id=doc_id,
+                        text=text,
+                        metadata=metadata,
+                        score=similarity,
+                        semantic_score=similarity,
+                        rank=i + 1
+                    ))
             
             return search_results
             
@@ -181,7 +213,7 @@ class HybridSearchEngine:
             return []
     
     def _bm25_search(self, query: str, n_results: int) -> List[SearchResult]:
-        """Recherche BM25 par mots-clés"""
+        """Recherche BM25 par mots-clés avec support de compatibilité"""
         if self.bm25_index is None or not self.bm25_documents:
             logger.warning("Index BM25 non initialisé")
             return []
@@ -202,10 +234,18 @@ class HybridSearchEngine:
                 if scores[idx] > 0:  # Filtrer scores nuls
                     doc = self.bm25_documents[idx]
                     
+                    # Use clean content for BM25 scoring if available
+                    text_content = doc.get('clean_content', doc.get('text', ''))
+                    display_content = doc.get('text', text_content)
+                    
                     search_results.append(SearchResult(
                         doc_id=doc['id'],
-                        text=doc['text'],
-                        metadata=doc.get('metadata', {}),
+                        text=display_content,
+                        metadata={
+                            **doc.get('metadata', {}),
+                            'clean_content': text_content,
+                            'bm25_tokens_matched': len([t for t in query_tokens if t in self._tokenize(text_content)])
+                        },
                         score=float(scores[idx]),
                         bm25_score=float(scores[idx]),
                         rank=rank

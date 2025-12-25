@@ -16,6 +16,7 @@ from src.document_processing.parser import DocumentParser
 from src.document_processing.chunker import SemanticChunker
 from src.document_processing.embedding_generator import EmbeddingGenerator
 from src.storage.vector_store import VectorStore
+from src.storage.models import EnhancedChunk, is_enhanced_chunk, migrate_chunk_metadata
 from src.retrieval.hybrid_search import HybridSearchEngine
 
 
@@ -96,7 +97,17 @@ class DocumentIngestion:
                 return 0
             
             # 3. Génération d'embeddings
-            texts = [chunk.text for chunk in chunks]
+            texts = []
+            for chunk in chunks:
+                # Extract text from chunk (handle both old and new formats)
+                if hasattr(chunk, 'content'):
+                    texts.append(chunk.content)  # EnhancedChunk format
+                elif hasattr(chunk, 'text'):
+                    texts.append(chunk.text)     # Legacy Chunk format
+                else:
+                    logger.warning(f"Unknown chunk format for chunk {i}")
+                    continue
+                    
             embeddings = self.embedder.generate_embeddings_batch(
                 texts=texts,
                 show_progress=True
@@ -113,17 +124,33 @@ class DocumentIngestion:
                 # Create unique ID using filename and index
                 unique_id = f"{file_path.stem}_{i}_{uuid.uuid4().hex[:8]}"
                 
-                metadatas.append({
+                # Use enhanced chunk's storage metadata method if available
+                if hasattr(chunk, 'to_storage_metadata'):
+                    storage_metadata = chunk.to_storage_metadata()
+                else:
+                    # Fallback for legacy chunks
+                    storage_metadata = chunk.metadata.copy() if hasattr(chunk, 'metadata') else {}
+                
+                # Ensure required fields are present
+                storage_metadata.update({
                     'chunk_id': unique_id,
-                    'filename': chunk.metadata.get('filename'),
-                    'filepath': chunk.metadata.get('filepath'),
-                    'page_number': chunk.metadata.get('page_number', ''),
-                    'section': chunk.metadata.get('section', ''),
-                    'char_count': chunk.metadata.get('char_count'),
-                    'word_count': chunk.metadata.get('word_count'),
-                    'token_count': chunk.token_count,
-                    'format': chunk.metadata.get('format'),
+                    'filename': chunk.metadata.get('filename') if hasattr(chunk, 'metadata') else parsed_doc.metadata.get('filename'),
+                    'filepath': chunk.metadata.get('filepath') if hasattr(chunk, 'metadata') else parsed_doc.metadata.get('filepath'),
+                    'page_number': chunk.metadata.get('page_number', '') if hasattr(chunk, 'metadata') else '',
+                    'section': chunk.metadata.get('section', '') if hasattr(chunk, 'metadata') else '',
+                    'format': chunk.metadata.get('format') if hasattr(chunk, 'metadata') else parsed_doc.metadata.get('format'),
                 })
+                
+                # Add statistical fields if not already present
+                chunk_text = chunk.content if hasattr(chunk, 'content') else chunk.text
+                if 'char_count' not in storage_metadata:
+                    storage_metadata['char_count'] = len(chunk_text)
+                if 'word_count' not in storage_metadata:
+                    storage_metadata['word_count'] = len(chunk_text.split())
+                if 'token_count' not in storage_metadata:
+                    storage_metadata['token_count'] = len(chunk_text) // 4
+                
+                metadatas.append(storage_metadata)
                 ids.append(unique_id)
             
             # 5. Ajout au vector store
@@ -136,14 +163,13 @@ class DocumentIngestion:
             logger.info(f"  ✓ Stockage: {len(texts)} chunks ajoutés à ChromaDB")
             
             # 6. Indexation BM25
-            documents_for_bm25 = [
-                {
+            documents_for_bm25 = []
+            for chunk_id, text, meta in zip(ids, texts, metadatas):
+                documents_for_bm25.append({
                     'id': chunk_id,
                     'text': text,
                     'metadata': meta
-                }
-                for chunk_id, text, meta in zip(ids, texts, metadatas)
-            ]
+                })
             
             # Note: On devrait accumuler tous les documents puis indexer BM25 à la fin
             # Pour l'instant, on peut sauter cette étape et l'indexer lors du premier usage
@@ -261,6 +287,42 @@ class DocumentIngestion:
         else:
             logger.info("Opération annulée")
     
+    def migrate_existing_chunks(self):
+        """Migrate existing chunks to enhanced format with backward compatibility"""
+        logger.info("🔄 Checking for chunks that need migration to enhanced format")
+        
+        try:
+            # Get all existing documents
+            all_docs = self.vector_store.peek(limit=self.vector_store.count())
+            
+            if not all_docs or not all_docs.get('documents'):
+                logger.info("No existing chunks found to migrate")
+                return
+            
+            migration_count = 0
+            
+            for doc_id, text, metadata in zip(
+                all_docs['ids'],
+                all_docs['documents'], 
+                all_docs['metadatas']
+            ):
+                # Check if chunk needs migration
+                if not is_enhanced_chunk(metadata):
+                    # Migrate metadata to enhanced format
+                    enhanced_metadata = migrate_chunk_metadata(metadata)
+                    
+                    # Update the chunk in vector store
+                    self.vector_store.update_metadata(doc_id, enhanced_metadata)
+                    migration_count += 1
+            
+            if migration_count > 0:
+                logger.success(f"✅ Migrated {migration_count} chunks to enhanced format")
+            else:
+                logger.info("All chunks are already in enhanced format")
+                
+        except Exception as e:
+            logger.error(f"Error during chunk migration: {e}")
+    
     def get_stats(self) -> dict:
         """Retourne les statistiques de la base"""
         return {
@@ -301,6 +363,12 @@ def main():
     )
     
     parser.add_argument(
+        '--migrate',
+        action='store_true',
+        help='Migrate existing chunks to enhanced format'
+    )
+    
+    parser.add_argument(
         '--stats',
         action='store_true',
         help='Afficher les statistiques uniquement'
@@ -317,6 +385,11 @@ def main():
     
     # Initialisation
     ingestion = DocumentIngestion()
+    
+    # Migration if requested
+    if args.migrate:
+        ingestion.migrate_existing_chunks()
+        return
     
     # Stats uniquement
     if args.stats:
@@ -364,6 +437,7 @@ if __name__ == "__main__":
     # python scripts/ingest_documents.py data/documents --recursive
     # python scripts/ingest_documents.py data/documents/cours_iot.pdf
     # python scripts/ingest_documents.py --stats
+    # python scripts/ingest_documents.py --migrate
     # python scripts/ingest_documents.py data/documents --reset
     
     main()

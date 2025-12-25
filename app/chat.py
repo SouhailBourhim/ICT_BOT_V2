@@ -370,7 +370,13 @@ def render_main_chat(system):
 
 
 def render_sources(sources, confidence):
-    """Affiche les sources et le niveau de confiance"""
+    """
+    Affiche les sources et le niveau de confiance avec support de compatibilité
+    
+    Args:
+        sources: Liste des sources (format ancien ou nouveau)
+        confidence: Niveau de confiance global
+    """
     st.markdown("---")
     
     # Badge de confiance
@@ -389,18 +395,179 @@ def render_sources(sources, confidence):
         unsafe_allow_html=True
     )
     
-    # Sources
+    # Sources avec support de compatibilité
     st.markdown("**📚 Sources consultées:**")
     
+    if not sources:
+        st.info("Aucune source trouvée.")
+        return
+    
+    # Detect if we have enhanced source format
+    has_enhanced_sources = any(
+        isinstance(source, dict) and source.get('chunk_format') in ['enhanced', 'legacy']
+        for source in sources
+    )
+    
+    if has_enhanced_sources:
+        # Use enhanced rendering with compatibility support
+        render_enhanced_sources_inline(sources)
+    else:
+        # Fallback to original rendering for legacy format
+        render_legacy_sources(sources)
+
+
+def render_enhanced_sources_inline(sources):
+    """
+    Render sources with enhanced compatibility information inline
+    
+    Args:
+        sources: List of source dictionaries with compatibility info
+    """
+    # Show format statistics
+    format_counts = {}
+    for source in sources:
+        chunk_format = source.get('chunk_format', 'unknown')
+        format_counts[chunk_format] = format_counts.get(chunk_format, 0) + 1
+    
+    # Display format info if mixed
+    if len(format_counts) > 1:
+        format_info = []
+        for fmt, count in format_counts.items():
+            if fmt == 'enhanced':
+                format_info.append(f"🟢 {count} enrichi(s)")
+            elif fmt == 'legacy':
+                format_info.append(f"🟡 {count} ancien(s)")
+            else:
+                format_info.append(f"🔴 {count} inconnu(s)")
+        
+        st.caption(f"Formats: {', '.join(format_info)}")
+    
+    # Render individual sources
     for i, source in enumerate(sources, 1):
-        pages = f"pages {', '.join(map(str, source['pages']))}" if source['pages'] else "page inconnue"
+        # Extract display information
+        display_title = get_source_display_title(source)
+        content = get_source_display_content(source)
+        score = source.get('score', 0.0)
+        chunk_format = source.get('chunk_format', 'unknown')
+        
+        # Format indicator
+        format_indicator = ""
+        if chunk_format == 'enhanced':
+            format_indicator = "🟢"
+        elif chunk_format == 'legacy':
+            format_indicator = "🟡"
+        else:
+            format_indicator = "🔴"
+        
+        # Contextual header info
+        contextual_info = ""
+        if source.get('has_contextual_header', False):
+            contextual_header = source.get('contextual_header', '')
+            if contextual_header:
+                contextual_info = f"<br><small>📍 {contextual_header}</small>"
         
         st.markdown(f"""
         <div class="source-card">
-            <strong>[{i}]</strong> {source['name']}<br>
-            <small>📄 {pages} • Score: {source['score']:.2f}</small>
+            <strong>[{i}] {format_indicator}</strong> {display_title}<br>
+            <small>Score: {score:.2f}</small>{contextual_info}
         </div>
         """, unsafe_allow_html=True)
+        
+        # Show content preview
+        content_preview = content[:150] + "..." if len(content) > 150 else content
+        st.text(content_preview)
+
+
+def render_legacy_sources(sources):
+    """
+    Render sources in legacy format (backward compatibility)
+    
+    Args:
+        sources: List of sources in legacy format
+    """
+    for i, source in enumerate(sources, 1):
+        # Handle different legacy formats
+        if isinstance(source, dict):
+            # Dictionary format
+            name = source.get('name', source.get('filename', f'Document {i}'))
+            pages = source.get('pages', [])
+            score = source.get('score', 0.0)
+            
+            pages_text = f"pages {', '.join(map(str, pages))}" if pages else "page inconnue"
+            
+            st.markdown(f"""
+            <div class="source-card">
+                <strong>[{i}]</strong> {name}<br>
+                <small>📄 {pages_text} • Score: {score:.2f}</small>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            # String or other format
+            st.markdown(f"""
+            <div class="source-card">
+                <strong>[{i}]</strong> {str(source)[:100]}...
+            </div>
+            """, unsafe_allow_html=True)
+
+
+def get_source_display_title(source):
+    """
+    Get appropriate display title for a source
+    
+    Args:
+        source: Source dictionary
+        
+    Returns:
+        Display title string
+    """
+    # Try display_title first (from compatibility layer)
+    if source.get('display_title'):
+        return source['display_title']
+    
+    # Try contextual_header
+    if source.get('contextual_header'):
+        return source['contextual_header']
+    
+    # Try legacy name field
+    if source.get('name'):
+        return source['name']
+    
+    # Try filename from metadata
+    metadata = source.get('metadata', {})
+    filename = metadata.get('filename') or metadata.get('source')
+    if filename:
+        return filename
+    
+    # Fallback
+    return f"Document {source.get('id', 'Unknown')}"
+
+
+def get_source_display_content(source):
+    """
+    Get appropriate display content for a source
+    
+    Args:
+        source: Source dictionary
+        
+    Returns:
+        Content string for display
+    """
+    # Use clean_content if available
+    clean_content = source.get('clean_content')
+    if clean_content:
+        return clean_content
+    
+    # Fallback to regular content
+    content = source.get('content', '')
+    
+    # If content starts with contextual header, try to extract clean part
+    contextual_header = source.get('contextual_header', '')
+    if contextual_header and content.startswith(contextual_header):
+        # Remove header and leading newlines
+        clean_part = content[len(contextual_header):].lstrip('\n')
+        return clean_part if clean_part else content
+    
+    return content
 
 
 def main():

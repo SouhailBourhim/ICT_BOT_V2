@@ -1,7 +1,7 @@
 """
 Interface ChromaDB pour stockage vectoriel
 """
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 from pathlib import Path
 import uuid
 
@@ -16,6 +16,10 @@ except ImportError:
     embedding_functions = chromadb.utils.embedding_functions if hasattr(chromadb, 'utils') else None
 from loguru import logger
 import numpy as np
+
+# Import compatibility layer and models
+from .compatibility import compatibility_layer
+from .models import Chunk, EnhancedChunk
 
 
 class VectorStore:
@@ -121,11 +125,27 @@ class VectorStore:
         try:
             logger.info(f"Ajout de {len(texts)} documents...")
             
+            # Process metadata through compatibility layer to ensure proper format
+            processed_metadatas = []
+            for metadata in metadatas:
+                # Ensure metadata is in proper storage format
+                if isinstance(metadata, dict):
+                    # Convert any complex objects to JSON strings for ChromaDB compatibility
+                    processed_metadata = {}
+                    for key, value in metadata.items():
+                        if isinstance(value, (list, dict)):
+                            processed_metadata[key] = str(value) if isinstance(value, list) and len(str(value)) < 100 else "[]" if isinstance(value, list) else "{}"
+                        else:
+                            processed_metadata[key] = value
+                    processed_metadatas.append(processed_metadata)
+                else:
+                    processed_metadatas.append(metadata)
+            
             if embeddings is not None:
                 # Avec embeddings pré-calculés
                 self.collection.add(
                     documents=texts,
-                    metadatas=metadatas,
+                    metadatas=processed_metadatas,
                     ids=ids,
                     embeddings=embeddings
                 )
@@ -133,7 +153,7 @@ class VectorStore:
                 # Embeddings auto-générés par ChromaDB
                 self.collection.add(
                     documents=texts,
-                    metadatas=metadatas,
+                    metadatas=processed_metadatas,
                     ids=ids
                 )
             
@@ -152,7 +172,7 @@ class VectorStore:
         where_document: Optional[Dict] = None
     ) -> Dict:
         """
-        Recherche sémantique dans la collection
+        Recherche sémantique dans la collection avec support de compatibilité
         
         Args:
             query_text: Texte de la requête
@@ -161,7 +181,7 @@ class VectorStore:
             where_document: Filtres sur documents
             
         Returns:
-            Dictionnaire avec ids, documents, metadatas, distances
+            Dictionnaire avec ids, documents, metadatas, distances (format normalisé)
         """
         try:
             results = self.collection.query(
@@ -171,12 +191,27 @@ class VectorStore:
                 where_document=where_document
             )
             
-            # Reformater les résultats
+            # Reformater les résultats avec support de compatibilité
+            raw_results = []
+            if results['ids'] and results['ids'][0]:
+                for i in range(len(results['ids'][0])):
+                    raw_results.append({
+                        'id': results['ids'][0][i],
+                        'content': results['documents'][0][i] if results['documents'] and results['documents'][0] else '',
+                        'metadata': results['metadatas'][0][i] if results['metadatas'] and results['metadatas'][0] else {},
+                        'distance': results['distances'][0][i] if results['distances'] and results['distances'][0] else 0.0
+                    })
+            
+            # Process through compatibility layer
+            normalized_results = compatibility_layer.handle_mixed_search_results(raw_results)
+            
+            # Convert back to expected format
             formatted_results = {
-                'ids': results['ids'][0] if results['ids'] else [],
-                'documents': results['documents'][0] if results['documents'] else [],
-                'metadatas': results['metadatas'][0] if results['metadatas'] else [],
-                'distances': results['distances'][0] if results['distances'] else []
+                'ids': [result['id'] for result in normalized_results],
+                'documents': [result['content'] for result in normalized_results],
+                'metadatas': [result['metadata'] for result in normalized_results],
+                'distances': [result.get('distance', 0.0) for result in normalized_results],
+                'normalized_results': normalized_results  # Include enhanced results for UI
             }
             
             logger.info(f"Recherche: {len(formatted_results['ids'])} résultats trouvés")
@@ -194,7 +229,7 @@ class VectorStore:
         where: Optional[Dict] = None
     ) -> Dict:
         """
-        Recherche par vecteur d'embedding directement
+        Recherche par vecteur d'embedding directement avec support de compatibilité
         
         Args:
             query_embedding: Vecteur d'embedding
@@ -202,7 +237,7 @@ class VectorStore:
             where: Filtres sur métadonnées
             
         Returns:
-            Dictionnaire avec résultats
+            Dictionnaire avec résultats normalisés
         """
         try:
             results = self.collection.query(
@@ -211,11 +246,27 @@ class VectorStore:
                 where=where
             )
             
+            # Reformater les résultats avec support de compatibilité
+            raw_results = []
+            if results['ids'] and results['ids'][0]:
+                for i in range(len(results['ids'][0])):
+                    raw_results.append({
+                        'id': results['ids'][0][i],
+                        'content': results['documents'][0][i] if results['documents'] and results['documents'][0] else '',
+                        'metadata': results['metadatas'][0][i] if results['metadatas'] and results['metadatas'][0] else {},
+                        'distance': results['distances'][0][i] if results['distances'] and results['distances'][0] else 0.0
+                    })
+            
+            # Process through compatibility layer
+            normalized_results = compatibility_layer.handle_mixed_search_results(raw_results)
+            
+            # Convert back to expected format
             formatted_results = {
-                'ids': results['ids'][0] if results['ids'] else [],
-                'documents': results['documents'][0] if results['documents'] else [],
-                'metadatas': results['metadatas'][0] if results['metadatas'] else [],
-                'distances': results['distances'][0] if results['distances'] else []
+                'ids': [result['id'] for result in normalized_results],
+                'documents': [result['content'] for result in normalized_results],
+                'metadatas': [result['metadata'] for result in normalized_results],
+                'distances': [result.get('distance', 0.0) for result in normalized_results],
+                'normalized_results': normalized_results  # Include enhanced results for UI
             }
             
             return formatted_results
@@ -232,6 +283,60 @@ class VectorStore:
         except Exception as e:
             logger.error(f"Erreur lors de la récupération: {e}")
             raise
+    
+    def add_enhanced_chunks(
+        self,
+        chunks: List[Union[Chunk, EnhancedChunk]],
+        embeddings: Optional[List[List[float]]] = None
+    ) -> List[str]:
+        """
+        Add chunks (legacy or enhanced) to the vector store with compatibility handling
+        
+        Args:
+            chunks: List of Chunk or EnhancedChunk instances
+            embeddings: Optional pre-computed embeddings
+            
+        Returns:
+            List of added chunk IDs
+        """
+        if not chunks:
+            logger.warning("No chunks to add")
+            return []
+        
+        try:
+            # Prepare data for storage
+            texts = []
+            metadatas = []
+            ids = []
+            
+            for chunk in chunks:
+                # Use compatibility layer to prepare chunk for storage
+                storage_metadata = compatibility_layer.prepare_chunk_for_storage(chunk)
+                
+                texts.append(chunk.content)
+                metadatas.append(storage_metadata)
+                ids.append(chunk.id)
+            
+            # Add to vector store
+            return self.add_documents(
+                texts=texts,
+                metadatas=metadatas,
+                ids=ids,
+                embeddings=embeddings
+            )
+            
+        except Exception as e:
+            logger.error(f"Error adding enhanced chunks: {e}")
+            raise
+    
+    def get_compatibility_stats(self) -> Dict[str, Any]:
+        """
+        Get compatibility statistics from the compatibility layer
+        
+        Returns:
+            Dictionary with compatibility statistics
+        """
+        return compatibility_layer.get_compatibility_stats()
     
     def update_documents(
         self,
@@ -256,6 +361,18 @@ class VectorStore:
             
         except Exception as e:
             logger.error(f"Erreur lors de la mise à jour: {e}")
+            raise
+    
+    def update_metadata(self, doc_id: str, metadata: Dict):
+        """Update metadata for a single document"""
+        try:
+            self.collection.update(
+                ids=[doc_id],
+                metadatas=[metadata]
+            )
+            logger.debug(f"Updated metadata for document {doc_id}")
+        except Exception as e:
+            logger.error(f"Error updating metadata for {doc_id}: {e}")
             raise
     
     def delete_documents(self, ids: List[str]):

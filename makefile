@@ -43,7 +43,7 @@ venv: ## Crée un environnement virtuel
 
 run: ## Lance l'application Streamlit
 	@echo "$(GREEN)Lancement de l'application...$(NC)"
-	$(STREAMLIT) run app/streamlit_app.py
+	$(STREAMLIT) run app/chat.py
 
 ollama-start: ## Démarre Ollama en arrière-plan
 	@echo "$(GREEN)Démarrage d'Ollama...$(NC)"

@@ -26,8 +26,10 @@ rank-bm25==0.2.2
 
 # LLM Integration
 ollama==0.1.6
-langchain==0.1.0
-langchain-community==0.0.10
+langchain==0.1.20
+langchain-community==0.0.38
+langchain-text-splitters==0.0.2
+langchain-experimental==0.0.62
 
 # Database
 sqlalchemy==2.0.23
