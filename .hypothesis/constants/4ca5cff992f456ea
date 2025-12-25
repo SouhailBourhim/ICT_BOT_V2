@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/llm/ollama_client.py
+# hypothesis_version: 6.148.8
+
+[0.7, 1000000000.0, 120, 200, 600, 2000, '/', '__main__', 'content', 'done', 'embedding', 'llama3.2:3b', 'message', 'messages', 'model', 'models', 'name', 'num_predict', 'options', 'prompt', 'response', 'role', 'status', 'stop', 'stream', 'system', 'temperature', 'total_duration', 'user']

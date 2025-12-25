@@ -1,0 +1,57 @@
+# Development Docker Compose Override
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+version: '3.8'
+
+services:
+  # Development overrides for RAG Application
+  rag-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: development  # Use development stage if multi-stage build
+    container_name: inpt-rag-app-dev
+    volumes:
+      # Mount source code for hot reload
+      - ../app:/app/app
+      - ../src:/app/src
+      - ../scripts:/app/scripts
+      # Data volumes (read-write for development)
+      - ../data:/app/data
+      - ../database:/app/database
+      - ../logs:/app/logs
+      - ../data/conversations:/app/data/conversations
+      - ../data/embeddings:/app/data/embeddings
+      - ../data/processed:/app/data/processed
+    environment:
+      # Development-specific settings
+      - LOG_LEVEL=DEBUG
+      - CACHE_ENABLED=false  # Disable caching for development
+      - ENABLE_TRACKING=false  # Disable analytics tracking
+      - LLM_TEMPERATURE=0.2  # Slightly more creative for testing
+      - STREAMLIT_SERVER_RUN_ON_SAVE=true
+      - STREAMLIT_SERVER_FILE_WATCHER_TYPE=auto
+    ports:
+      - "8501:8501"
+      - "8502:8502"  # Additional port for debugging
+    command: >
+      sh -c "
+        echo 'Starting development server...' &&
+        streamlit run app/chat.py --server.port=8501 --server.address=0.0.0.0 --server.runOnSave=true
+      "
+
+  # Development overrides for Ollama
+  ollama:
+    container_name: inpt-ollama-dev
+    environment:
+      - OLLAMA_MODELS=/root/.ollama/models
+      - OLLAMA_NUM_PARALLEL=1  # Reduced for development
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_DEBUG=1  # Enable debug logging
+    ports:
+      - "11434:11434"
+      - "11435:11435"  # Additional port for debugging
+
+# Development-specific volumes
+volumes:
+  dev_cache:
+    driver: local

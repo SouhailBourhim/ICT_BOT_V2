@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: inpt-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_MODELS=/root/.ollama/models
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # RAG Application
+  rag-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: inpt-rag-app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ../data:/app/data
+      - ../database:/app/database
+      - ../logs:/app/logs
+      - ../data/conversations:/app/data/conversations
+      - ../data/embeddings:/app/data/embeddings
+      - ../data/processed:/app/data/processed
+    environment:
+      # Project Information
+      - PROJECT_NAME=Assistant Éducatif RAG - INPT Smart ICT
+      - VERSION=1.0.0
+      - LANGUAGE=fr
+      
+      # Paths (Container paths)
+      - BASE_DIR=/app
+      - DATA_DIR=/app/data
+      - DOCUMENTS_DIR=/app/data/documents
+      - PROCESSED_DIR=/app/data/processed
+      - DATABASE_DIR=/app/database
+      - LOGS_DIR=/app/logs
+      
+      # Document Processing
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+      - MIN_CHUNK_SIZE=100
+      - SUPPORTED_FORMATS=[".pdf", ".txt", ".md", ".docx"]
+      
+      # Embeddings
+      - EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      - EMBEDDING_DIMENSION=384
+      - BATCH_SIZE=32
+      
+      # ChromaDB Configuration
+      - CHROMA_PERSIST_DIR=/app/database/chroma_db
+      - CHROMA_COLLECTION_NAME=inpt_smart_ict_docs
+      
+      # SQLite Configuration
+      - SQLITE_DB_PATH=/app/database/metadata.db
+      - SQLITE_DB_URL=sqlite:////app/database/metadata.db
+      
+      # Retrieval Configuration
+      - TOP_K_RETRIEVAL=7
+      - SIMILARITY_THRESHOLD=0.4
+      - SEMANTIC_WEIGHT=0.7
+      - BM25_WEIGHT=0.3
+      - RERANK_TOP_K=3
+      
+      # Ollama Configuration
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=qwen2.5:3b
+      - OLLAMA_TIMEOUT=180
+      - LLM_TEMPERATURE=0.1
+      - LLM_MAX_TOKENS=500
+      
+      # Conversation Configuration
+      - MAX_CONVERSATION_HISTORY=6
+      - CONTEXT_WINDOW_SIZE=4096
+      
+      # Query Enhancement
+      - ENABLE_SPELLING_CORRECTION=true
+      - ENABLE_QUERY_EXPANSION=true
+      
+      # Analytics
+      - ENABLE_TRACKING=true
+      - ENABLE_METRICS=true
+      
+      # Streamlit Configuration
+      - STREAMLIT_PAGE_TITLE=Assistant RAG - INPT Smart ICT
+      - STREAMLIT_PAGE_ICON=🎓
+      - STREAMLIT_LAYOUT=wide
+      
+      # Logging
+      - LOG_LEVEL=INFO
+      - "LOG_FORMAT=<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan> - <level>{message}</level>"
+      
+      # Performance
+      - MAX_WORKERS=4
+      - CACHE_ENABLED=true
+      - CACHE_TTL=3600
+      
+      # System
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  ollama_data:
+    driver: local

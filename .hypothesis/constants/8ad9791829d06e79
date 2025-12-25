@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/retrieval/hybrid_search.py
+# hypothesis_version: 6.148.8
+
+[0.0, 0.01, 0.3, 0.7, 1.0, '.,!?;:()[]{}', './test_db', '__main__', 'bm25_tokens_matched', 'chunk_format', 'clean_content', 'content', 'cours_cloud.pdf', 'cours_iot.pdf', 'cours_secu.pdf', 'display_title', 'distance', 'distances', 'doc1', 'doc2', 'doc3', 'documents', 'id', 'ids', 'metadata', 'metadatas', 'normalized_results', 'source', 'test_collection', 'text', 'unknown']

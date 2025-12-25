@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/storage/compatibility.py
+# hypothesis_version: 6.148.8
+
+[100, ' > ', 'Unknown Document', 'chunk_format', 'chunk_id', 'clean_content', 'content', 'contextual_header', 'display_title', 'document_id', 'embedding', 'enhanced', 'enhanced_chunks', 'enhanced_percentage', 'filename', 'hierarchy_path', 'id', 'legacy', 'legacy_chunks', 'legacy_percentage', 'metadata', 'original_text', 'page', 'page_number', 'section', 'source', 'structure_metadata', 'unknown']

@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/retrieval/semantic_retriever.py
+# hypothesis_version: 6.148.8
+
+[0.0, 1.0, 'chunk_format', 'clean_content', 'content', 'contextual_header', 'display_title', 'distance', 'distances', 'documents', 'hierarchy_path', 'id', 'ids', 'metadata', 'metadatas', 'normalized_results', 'score', 'structure_metadata', 'unknown']

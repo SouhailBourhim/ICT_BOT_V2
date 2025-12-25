@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/storage/metadata_store.py
+# hypothesis_version: 6.148.8
+
+['created_at', 'filename', 'filepath', 'format', 'modified_at', 'processed_at', 'size']

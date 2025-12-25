@@ -1,0 +1,158 @@
+# Production Docker Compose Configuration
+version: '3.8'
+
+services:
+  # Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: inpt-ollama-prod
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_MODELS=/root/.ollama/models
+      - OLLAMA_NUM_PARALLEL=4
+      - OLLAMA_MAX_LOADED_MODELS=2
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # RAG Application
+  rag-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        - BUILD_ENV=production
+    container_name: inpt-rag-app-prod
+    ports:
+      - "8501:8501"
+    volumes:
+      - ../data:/app/data:ro  # Read-only for security
+      - ../database:/app/database
+      - ../logs:/app/logs
+      - ../data/conversations:/app/data/conversations
+      - ../data/embeddings:/app/data/embeddings
+      - ../data/processed:/app/data/processed
+      - app_cache:/app/.cache
+    environment:
+      # Project Information
+      - PROJECT_NAME=Assistant Éducatif RAG - INPT Smart ICT
+      - VERSION=1.0.0
+      - LANGUAGE=fr
+      
+      # Ollama Configuration
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=qwen2.5:3b
+      - OLLAMA_TIMEOUT=180
+      - LLM_TEMPERATURE=0.1
+      - LLM_MAX_TOKENS=500
+      
+      # Embedding Configuration
+      - EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      - EMBEDDING_DIMENSION=384
+      - BATCH_SIZE=32
+      
+      # Document Processing
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+      - MIN_CHUNK_SIZE=100
+      
+      # ChromaDB Configuration
+      - CHROMA_COLLECTION_NAME=inpt_smart_ict_docs
+      
+      # Retrieval Configuration
+      - TOP_K_RETRIEVAL=7
+      - SIMILARITY_THRESHOLD=0.4
+      - SEMANTIC_WEIGHT=0.7
+      - BM25_WEIGHT=0.3
+      - RERANK_TOP_K=3
+      
+      # Conversation Configuration
+      - MAX_CONVERSATION_HISTORY=6
+      - CONTEXT_WINDOW_SIZE=4096
+      
+      # Query Enhancement
+      - ENABLE_SPELLING_CORRECTION=true
+      - ENABLE_QUERY_EXPANSION=true
+      
+      # Analytics
+      - ENABLE_TRACKING=true
+      - ENABLE_METRICS=true
+      
+      # Streamlit Configuration
+      - STREAMLIT_PAGE_TITLE=Assistant RAG - INPT Smart ICT
+      - STREAMLIT_PAGE_ICON=🎓
+      - STREAMLIT_LAYOUT=wide
+      - STREAMLIT_SERVER_MAX_UPLOAD_SIZE=200
+      - STREAMLIT_SERVER_ENABLE_CORS=false
+      - STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=true
+      
+      # Logging
+      - LOG_LEVEL=INFO
+      
+      # Performance
+      - MAX_WORKERS=4
+      - CACHE_ENABLED=true
+      - CACHE_TTL=3600
+      
+      # System
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      ollama:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: inpt-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - rag-app
+    restart: always
+    profiles:
+      - with-nginx
+
+volumes:
+  ollama_data:
+    driver: local
+  app_cache:
+    driver: local
+
+networks:
+  default:
+    name: inpt-rag-network
+    driver: bridge

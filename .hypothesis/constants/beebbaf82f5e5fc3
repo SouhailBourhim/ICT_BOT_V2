@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/storage/vector_store.py
+# hypothesis_version: 6.148.8
+
+[0.0, 100, './test_db', 'No chunks to add', 'Settings', '[]', '__main__', 'content', 'count', 'cours_cloud.pdf', 'cours_iot.pdf', 'cours_secu.pdf', 'description', 'distance', 'distances', 'documents', 'embeddings', 'id', 'ids', 'metadata', 'metadatas', 'name', 'normalized_results', 'page', 'persist_directory', 'source', 'test_collection', 'utils', '{}']
