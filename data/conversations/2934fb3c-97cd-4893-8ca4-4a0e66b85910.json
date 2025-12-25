@@ -1,0 +1,24 @@
+{
+  "id": "2934fb3c-97cd-4893-8ca4-4a0e66b85910",
+  "title": "Comment fonctionne HDFS?",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Comment fonctionne HDFS?",
+      "timestamp": "2025-12-25T16:18:18.560542",
+      "metadata": {}
+    },
+    {
+      "role": "assistant",
+      "content": "Information non disponible dans les documents",
+      "timestamp": "2025-12-25T16:18:18.562044",
+      "metadata": {
+        "confidence": 0.48769427648429947,
+        "num_sources": 1
+      }
+    }
+  ],
+  "created_at": "2025-12-25T16:17:47.416788",
+  "updated_at": "2025-12-25T16:18:18.562047",
+  "metadata": {}
+}

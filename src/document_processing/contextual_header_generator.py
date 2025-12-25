@@ -223,14 +223,24 @@ class ContextualHeaderGenerator:
         for pattern in self.pdf_section_patterns:
             matches = list(re.finditer(pattern, text, re.MULTILINE))
             for match in matches:
-                section_number = match.group(1).strip()
-                section_title = match.group(2).strip()
+                # Handle patterns with different numbers of groups
+                if match.lastindex >= 2:
+                    # Pattern has both section number and title
+                    section_number = match.group(1).strip()
+                    section_title = match.group(2).strip()
+                elif match.lastindex == 1:
+                    # Pattern has only title (like ALL CAPS headers)
+                    section_number = ""
+                    section_title = match.group(1).strip()
+                else:
+                    continue
                 
                 # Validate section title (avoid false positives)
                 if self._is_valid_section_title(section_title):
+                    title = f"{section_number} {section_title}".strip()
                     sections.append({
-                        'level': self._determine_section_level(section_number),
-                        'title': f"{section_number} {section_title}",
+                        'level': self._determine_section_level(section_number) if section_number else 1,
+                        'title': title,
                         'start_char': match.start(),
                         'end_char': None,  # Will be set later
                         'section_number': section_number,

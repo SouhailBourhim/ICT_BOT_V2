@@ -1,54 +1,35 @@
 # 🎓 Assistant Éducatif RAG - INPT Smart ICT
 
-Assistant intelligent basé sur RAG (Retrieval-Augmented Generation) conçu spécifiquement pour les étudiants Smart ICT de l'Institut National des Postes et Télécommunications (INPT).
+**Projet Académique - Système de Recherche et Génération Augmentée par Récupération**
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Python](https://img.shields.io/badge/python-3.9+-green)
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![Streamlit](https://img.shields.io/badge/streamlit-1.52.1-red)
+![ChromaDB](https://img.shields.io/badge/chromadb-1.3.5-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
-## 📋 Table des Matières
+---
 
-- [Fonctionnalités](#-fonctionnalités)
-- [Architecture](#-architecture)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Utilisation](#-utilisation)
-- [Structure du Projet](#-structure-du-projet)
-- [Développement](#-développement)
-- [FAQ](#-faq)
+## 📋 Présentation du Projet
 
-## ✨ Fonctionnalités
+Ce projet implémente un **système RAG (Retrieval-Augmented Generation)** intelligent conçu pour assister les étudiants Smart ICT de l'Institut National des Postes et Télécommunications (INPT). Le système combine des techniques avancées de traitement du langage naturel, de recherche vectorielle et de génération de texte pour créer un assistant éducatif capable de répondre aux questions des étudiants en se basant sur leurs documents de cours.
 
-### 🔍 Recherche Avancée
-- **Recherche hybride** : Combine recherche sémantique (embeddings) et recherche par mots-clés (BM25)
-- **Multi-format** : Support de PDF, TXT, MD, DOCX
-- **Chunking intelligent** : Découpage sémantique préservant la structure des documents
-- **Re-ranking** : Amélioration de la pertinence des résultats
+### 🎯 Objectifs Pédagogiques
 
-### 💬 Chat Intelligent
-- **Conversation contextuelle** : Maintien du contexte sur plusieurs échanges
-- **Citations précises** : Références aux sources avec numéros de page
-- **Confiance** : Indicateur de confiance pour chaque réponse
-- **Multilingue** : Optimisé pour le français
+1. **Apprentissage Personnalisé** : Fournir des réponses contextualisées basées sur le contenu spécifique des cours
+2. **Accessibilité** : Permettre aux étudiants d'interroger leurs documents en langage naturel
+3. **Traçabilité** : Citer précisément les sources utilisées pour chaque réponse
+4. **Multimodalité** : Supporter différents formats de documents (PDF, TXT, MD, DOCX)
 
-### 📚 Gestion Documentaire
-- **Ingestion automatique** : Pipeline de traitement de documents
-- **Métadonnées** : Extraction et indexation des métadonnées
-- **Versioning** : Suivi des versions de documents
-- **Stockage vectoriel** : ChromaDB pour recherche rapide
+---
 
-### 🎯 Pédagogique
-- **Explications progressives** : Adaptation au niveau de l'étudiant
-- **Questions de suivi** : Génération automatique de questions
-- **Exercices** : Création d'exercices pratiques
-- **Feedback** : Évaluation constructive des réponses
+## 🏗️ Architecture Technique
 
-## 🏗️ Architecture
+### Vue d'Ensemble du Système
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  Interface Streamlit                │
-│              (Chat + Upload + Analytics)            │
+│                Interface Streamlit                  │
+│         (Chat + Upload + Analytics)                 │
 └────────────────────┬────────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────────┐
@@ -73,219 +54,237 @@ Assistant intelligent basé sur RAG (Retrieval-Augmented Generation) conçu spé
 └────────────────────┘
 ```
 
-### Composants Principaux
+### 🔧 Composants Principaux
 
-1. **Document Processing** : Parsing, chunking sémantique, génération d'embeddings
-2. **Storage Layer** : ChromaDB (vecteurs) + SQLite (métadonnées)
-3. **Retrieval Engine** : Recherche hybride avec re-ranking
-4. **LLM Integration** : Ollama pour génération locale
-5. **Conversation Manager** : Gestion de l'historique et du contexte
-6. **Web Interface** : Streamlit pour l'UI
+#### 1. **Pipeline de Traitement de Documents** (`src/document_processing/`)
+- **Parser** : Extraction de texte multi-format (PDF, TXT, MD, DOCX)
+- **Chunker Sémantique** : Découpage intelligent préservant la cohérence
+- **Générateur d'Embeddings** : Vectorisation avec modèles multilingues
+- **Extracteur de Métadonnées** : Enrichissement contextuel
 
-## 🚀 Installation
+#### 2. **Moteur de Recherche Hybride** (`src/retrieval/`)
+- **Recherche Sémantique** : Similarité vectorielle avec embeddings
+- **Recherche BM25** : Correspondance par mots-clés (TF-IDF amélioré)
+- **Fusion de Scores** : Combinaison pondérée des deux approches
+- **Re-ranking** : Amélioration de la pertinence des résultats
 
-### Prérequis
+#### 3. **Couche de Stockage** (`src/storage/`)
+- **ChromaDB** : Base de données vectorielle pour embeddings
+- **SQLite** : Métadonnées et historique des conversations
+- **Modèles de Données** : Structures optimisées pour la recherche
 
-- Python 3.9+
-- Ollama installé et en cours d'exécution
-- 8GB RAM minimum (16GB recommandé)
-- GPU optionnel mais recommandé
+#### 4. **Intégration LLM** (`src/llm/`)
+- **Client Ollama** : Interface avec modèles locaux (Llama 3.2)
+- **Templates de Prompts** : Prompts optimisés pour l'éducation
+- **Générateur de Réponses** : Orchestration RAG complète
+
+#### 5. **Interface Utilisateur** (`app/`)
+- **Streamlit** : Interface web moderne et intuitive
+- **Chat Interface** : Conversation naturelle avec l'assistant
+- **Upload de Documents** : Ingestion en temps réel
+- **Analytics** : Métriques et statistiques d'utilisation
+
+---
+
+## 🚀 Installation et Configuration
+
+### Prérequis Système
+
+- **Python 3.11+** (testé avec 3.11.14)
+- **Ollama** ([https://ollama.ai](https://ollama.ai))
+- **8GB RAM minimum** (16GB recommandé)
+- **10GB espace disque** pour modèles et données
 
 ### Installation Rapide
 
 ```bash
-# 1. Cloner le repository
-git clone https://github.com/votre-repo/inpt-rag-assistant.git
-cd inpt-rag-assistant
+# 1. Cloner le projet
+git clone https://github.com/SouhailBourhim/ICT_BOT_V2.git
+cd ICT_BOT_V2
 
-# 2. Créer un environnement virtuel
-python -m venv venv
+# 2. Créer l'environnement virtuel
+python3.11 -m venv venv
 source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate  # Windows
+# ou venv\Scripts\activate  # Windows
 
 # 3. Installer les dépendances
 pip install -r requirements.txt
 
-# 4. Installer spaCy français
-python -m spacy download fr_core_news_md
-
-# 5. Installer Ollama
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# 6. Télécharger le modèle LLM
+# 4. Configurer Ollama
+ollama serve &
 ollama pull llama3.2:3b
 
-# 7. Copier et configurer .env
+# 5. Initialiser la base de données
+python scripts/setup_database.py
+
+# 6. Configurer l'environnement
 cp .env.example .env
 # Éditer .env selon vos besoins
-
-# 8. Initialiser les dossiers
-python -c "from src.config.settings import setup_directories; setup_directories()"
 ```
 
-## ⚙️ Configuration
+### Configuration Avancée
 
-### Variables d'Environnement
-
-Éditez le fichier `.env` :
+Le fichier `.env` permet de personnaliser le comportement du système :
 
 ```bash
-# Modèle LLM (choisir selon vos ressources)
-OLLAMA_MODEL="llama3.2:3b"  # Léger, rapide (3GB RAM)
-# OLLAMA_MODEL="mistral:7b"  # Meilleur qualité (8GB RAM)
+# Modèle LLM
+OLLAMA_MODEL="llama3.2:3b"
+LLM_TEMPERATURE=0.1
+LLM_MAX_TOKENS=500
 
 # Embeddings
 EMBEDDING_MODEL="paraphrase-multilingual-MiniLM-L12-v2"
+BATCH_SIZE=32
 
-# Recherche
-SEMANTIC_WEIGHT=0.7  # Poids recherche sémantique
-BM25_WEIGHT=0.3      # Poids recherche mots-clés
+# Recherche Hybride
+SEMANTIC_WEIGHT=0.7  # 70% recherche sémantique
+BM25_WEIGHT=0.3      # 30% recherche par mots-clés
+TOP_K_RETRIEVAL=10
+
+# Chunking
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
 ```
 
-### Modèles Recommandés
+---
 
-**LLM (Ollama):**
-- `llama3.2:3b` - Léger et rapide (3GB)
-- `llama3.2:7b` - Équilibré (7GB)
-- `mistral:7b` - Excellente qualité (8GB)
-
-**Embeddings:**
-- `paraphrase-multilingual-MiniLM-L12-v2` - Rapide, 384 dim
-- `paraphrase-multilingual-mpnet-base-v2` - Meilleure qualité, 768 dim
-
-## 📖 Utilisation
+## 📚 Utilisation du Système
 
 ### 1. Ingestion de Documents
 
 ```bash
-# Lancer Ollama en arrière-plan
-ollama serve &
+# Ajouter des documents au dossier
+cp ~/cours/*.pdf data/documents/
 
-# Ingérer un dossier complet
+# Ingérer tous les documents
 python scripts/ingest_documents.py data/documents --recursive
 
-# Ingérer un fichier unique
-python scripts/ingest_documents.py data/documents/cours_iot.pdf
-
-# Réinitialiser et réingérer
-python scripts/ingest_documents.py data/documents --reset --recursive
-
-# Voir les statistiques
+# Vérifier les statistiques
 python scripts/ingest_documents.py --stats
 ```
 
-### 2. Lancer l'Application
+### 2. Lancement de l'Application
 
 ```bash
-# Lancer Streamlit
-streamlit run app/streamlit_app.py
+# Démarrer Ollama (si pas déjà fait)
+ollama serve &
 
-# Ou avec configuration personnalisée
-streamlit run app/streamlit_app.py --server.port 8501
+# Lancer l'interface Streamlit
+streamlit run app/streamlit_app.py
 ```
 
 L'application sera accessible sur `http://localhost:8501`
 
-### 3. Utilisation via Python
+### 3. Utilisation via Interface Web
 
-```python
-from src.config.settings import settings
-from src.storage.vector_store import VectorStore
-from src.retrieval.hybrid_search import HybridSearchEngine
-from src.llm.ollama_client import OllamaClient
-from src.llm.response_generator import ResponseGenerator
-from src.llm.prompt_templates import PromptBuilder
+1. **Page Chat** : Poser des questions en langage naturel
+2. **Upload Documents** : Ajouter de nouveaux documents
+3. **Analytics** : Consulter les métriques du système
 
-# Initialisation
-vector_store = VectorStore(
-    persist_directory=str(settings.CHROMA_PERSIST_DIR),
-    collection_name=settings.CHROMA_COLLECTION_NAME
-)
+### 4. Exemples de Questions
 
-hybrid_search = HybridSearchEngine(vector_store=vector_store)
-ollama = OllamaClient(model=settings.OLLAMA_MODEL)
-prompt_builder = PromptBuilder()
-
-response_gen = ResponseGenerator(
-    hybrid_search=hybrid_search,
-    ollama_client=ollama,
-    prompt_builder=prompt_builder
-)
-
-# Poser une question
-response = response_gen.generate_response(
-    question="Qu'est-ce que l'IoT ?",
-    temperature=0.7
-)
-
-print(response.answer)
-print(f"Confiance: {response.confidence:.2%}")
-print(f"Sources: {len(response.sources)}")
+```
+- "Qu'est-ce que le clustering en machine learning ?"
+- "Explique-moi l'algorithme K-means"
+- "Quelles sont les différences entre apprentissage supervisé et non-supervisé ?"
+- "Comment fonctionne la régression linéaire ?"
 ```
 
-## 📁 Structure du Projet
+---
+
+## 🔬 Aspects Techniques Avancés
+
+### Algorithmes de Recherche
+
+#### Recherche Sémantique
+- **Modèle d'Embeddings** : `paraphrase-multilingual-MiniLM-L12-v2`
+- **Dimension des Vecteurs** : 384
+- **Métrique de Similarité** : Cosinus
+- **Optimisation** : Index HNSW pour recherche rapide
+
+#### Recherche BM25
+- **Tokenisation** : NLTK avec support français
+- **Paramètres** : k1=1.2, b=0.75 (optimisés pour textes académiques)
+- **Préprocessing** : Lemmatisation et suppression des mots vides
+
+#### Fusion de Scores
+```python
+score_final = (semantic_weight * score_semantic) + (bm25_weight * score_bm25)
+```
+
+### Pipeline de Traitement
+
+#### Chunking Sémantique
+- **Stratégie** : Préservation des paragraphes et sections
+- **Taille** : 1000 caractères avec overlap de 200
+- **Métadonnées** : Page, section, type de contenu
+
+#### Génération de Réponses
+- **Contexte** : Top-K chunks les plus pertinents
+- **Prompt Engineering** : Templates optimisés pour l'éducation
+- **Post-processing** : Validation et formatage des réponses
+
+---
+
+## � Structure du Projet
 
 ```
 inpt-rag-assistant/
-├── src/                          # Code source
-│   ├── config/                   # Configuration
-│   │   └── settings.py
-│   ├── document_processing/      # Traitement documents
-│   │   ├── parser.py
-│   │   ├── chunker.py
-│   │   ├── metadata_extractor.py
-│   │   └── embedding_generator.py
-│   ├── storage/                  # Couche stockage
-│   │   ├── vector_store.py
-│   │   ├── metadata_store.py
-│   │   └── models.py
+├── src/                          # Code source principal
+│   ├── config/                   # Configuration système
+│   │   └── settings.py          # Paramètres globaux
+│   ├── document_processing/      # Pipeline de traitement
+│   │   ├── parser.py            # Extraction multi-format
+│   │   ├── chunker.py           # Découpage sémantique
+│   │   ├── embedding_generator.py # Vectorisation
+│   │   └── metadata_extractor.py # Enrichissement
+│   ├── storage/                  # Couche de persistance
+│   │   ├── vector_store.py      # Interface ChromaDB
+│   │   ├── metadata_store.py    # Gestion métadonnées
+│   │   └── models.py            # Modèles de données
 │   ├── retrieval/                # Moteur de recherche
-│   │   ├── hybrid_search.py
-│   │   ├── bm25_retriever.py
-│   │   └── reranker.py
+│   │   ├── hybrid_search.py     # Recherche hybride
+│   │   ├── semantic_retriever.py # Recherche vectorielle
+│   │   └── bm25_retriever.py    # Recherche BM25
 │   ├── llm/                      # Intégration LLM
-│   │   ├── ollama_client.py
-│   │   ├── prompt_templates.py
-│   │   └── response_generator.py
+│   │   ├── ollama_client.py     # Client Ollama
+│   │   ├── prompt_templates.py  # Templates de prompts
+│   │   └── response_generator.py # Génération RAG
 │   ├── conversation/             # Gestion conversations
-│   │   ├── manager.py
-│   │   └── context_window.py
-│   ├── utils/                    # Utilitaires
-│   │   ├── query_enhancement.py
-│   │   ├── text_processing.py
-│   │   └── logger.py
-│   └── analytics/                # Analytics
-│       ├── tracker.py
-│       └── metrics.py
-├── app/                          # Application Streamlit
-│   ├── streamlit_app.py
-│   └── pages/
-│       ├── chat.py
-│       ├── upload.py
-│       └── analytics.py
-├── data/                         # Données
-│   ├── documents/                # Documents sources
-│   └── processed/                # Documents traités
-├── database/                     # Bases de données
-│   ├── chroma_db/               # ChromaDB
-│   └── metadata.db              # SQLite
+│   │   ├── manager.py           # Historique et contexte
+│   │   └── context_window.py    # Fenêtre contextuelle
+│   └── utils/                    # Utilitaires
+│       ├── text_processing.py   # Traitement de texte
+│       └── logger.py            # Système de logs
+├── app/                          # Interface Streamlit
+│   ├── streamlit_app.py         # Application principale
+│   ├── components/              # Composants UI
+│   └── pages/                   # Pages de l'interface
 ├── scripts/                      # Scripts utilitaires
-│   ├── ingest_documents.py
-│   ├── setup_database.py
-│   └── benchmark.py
-├── tests/                        # Tests
-├── logs/                         # Logs
-├── requirements.txt              # Dépendances
-├── .env.example                  # Config exemple
-└── README.md                     # Documentation
+│   ├── ingest_documents.py      # Ingestion de documents
+│   ├── setup_database.py        # Initialisation DB
+│   └── benchmark.py             # Tests de performance
+├── tests/                        # Tests unitaires
+├── docker/                       # Configuration Docker
+├── data/                         # Données
+│   ├── documents/               # Documents sources
+│   └── conversations/           # Historique des chats
+├── database/                     # Bases de données
+│   └── chroma_db/              # ChromaDB
+├── requirements.txt              # Dépendances Python
+├── .env.example                 # Configuration exemple
+└── README.md                    # Documentation
 ```
 
-## 🧪 Tests
+---
+
+## 🧪 Tests et Évaluation
+
+### Tests Unitaires
 
 ```bash
 # Lancer tous les tests
-pytest tests/
+pytest tests/ -v
 
 # Tests avec couverture
 pytest tests/ --cov=src --cov-report=html
@@ -294,89 +293,249 @@ pytest tests/ --cov=src --cov-report=html
 pytest tests/test_document_processing.py -v
 ```
 
-## 🛠️ Développement
+### Évaluation du Système
 
-### Ajout d'un Nouveau Format de Document
+Le système inclut des métriques d'évaluation automatiques :
 
-1. Modifier `src/document_processing/parser.py`
-2. Ajouter le parser spécifique
-3. Mettre à jour `SUPPORTED_FORMATS` dans `settings.py`
+- **Précision de Recherche** : Pertinence des documents récupérés
+- **Qualité des Réponses** : Cohérence et exactitude
+- **Performance** : Temps de réponse et utilisation mémoire
+- **Couverture** : Pourcentage de questions avec réponses satisfaisantes
 
-### Changement de Modèle LLM
+### Benchmarks de Performance
 
-```bash
-# Télécharger un nouveau modèle
-ollama pull mistral:7b
-
-# Mettre à jour .env
-OLLAMA_MODEL="mistral:7b"
-
-# Redémarrer l'application
-```
-
-### Personnalisation des Prompts
-
-Éditer `src/llm/prompt_templates.py` pour modifier les templates de prompts selon vos besoins.
-
-## 📊 Performances
-
-### Benchmarks (Machine de référence: i7, 16GB RAM)
-
-- **Ingestion**: ~50 pages PDF/minute
-- **Recherche**: ~100ms par requête
-- **Génération**: ~2-5 secondes (selon modèle)
-- **Embedding**: ~1000 chunks/minute
-
-### Optimisations
-
-```python
-# Augmenter le batch size pour l'ingestion
-BATCH_SIZE=64
-
-# Réduire le nombre de résultats de recherche
-TOP_K_RETRIEVAL=5
-
-# Utiliser un modèle plus léger
-OLLAMA_MODEL="llama3.2:3b"
-```
-
-## ❓ FAQ
-
-**Q: Ollama ne se connecte pas**  
-A: Vérifiez que le service est lancé: `ollama serve`
-
-**Q: Erreur "Out of memory"**  
-A: Utilisez un modèle plus léger ou réduisez `BATCH_SIZE`
-
-**Q: Les réponses sont lentes**  
-A: Utilisez un GPU ou un modèle plus petit (llama3.2:3b)
-
-**Q: Comment ajouter des documents en cours d'exécution?**  
-A: Utilisez le script d'ingestion pendant que l'app tourne, ou uploadez via l'interface (à implémenter)
-
-**Q: Les embeddings sont lents**  
-A: Utilisez un GPU ou réduisez `BATCH_SIZE`
-
-## 🤝 Contribution
-
-Les contributions sont les bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md)
-
-## 📝 License
-
-Ce projet est sous licence MIT. Voir [LICENSE](LICENSE)
-
-## 👥 Auteurs
-
-- Développé pour l'INPT Smart ICT
-- Propulsé par Ollama, ChromaDB, Streamlit
-
-## 📧 Support
-
-Pour toute question ou problème:
-- Ouvrir une issue sur GitHub
-- Contacter: support@inpt.ac.ma
+Sur une machine de référence (i7, 16GB RAM) :
+- **Ingestion** : ~50 pages PDF/minute
+- **Recherche** : ~100ms par requête
+- **Génération** : ~2-5 secondes selon le modèle
+- **Embedding** : ~1000 chunks/minute
 
 ---
 
-**Version**: 1.0.0  
-**Dernière mise à jour**: Décembre 2024
+## 🐳 Déploiement Docker
+
+Pour un déploiement simplifié :
+
+```bash
+# Déploiement complet
+cd docker
+docker-compose up -d
+
+# Accès à l'application
+open http://localhost:8501
+```
+
+Le système Docker inclut :
+- **Application principale** avec Streamlit
+- **Service Ollama** pour les LLMs
+- **Volumes persistants** pour données et modèles
+- **Configuration réseau** optimisée
+
+---
+
+## 📈 Métriques et Analytics
+
+### Tableau de Bord Analytics
+
+L'interface inclut un tableau de bord complet avec :
+
+- **Statistiques de Documents** : Nombre, taille, formats
+- **Métriques de Recherche** : Requêtes, temps de réponse, pertinence
+- **Utilisation LLM** : Tokens générés, modèles utilisés
+- **Performance Système** : Mémoire, CPU, stockage
+
+### Logs et Monitoring
+
+```bash
+# Consulter les logs
+tail -f logs/application.log
+
+# Statistiques de la base vectorielle
+python scripts/ingest_documents.py --stats
+
+# Métriques de performance
+python scripts/benchmark.py
+```
+
+---
+
+## 🔧 Personnalisation et Extension
+
+### Ajout de Nouveaux Formats
+
+Pour supporter un nouveau format de document :
+
+1. Étendre `src/document_processing/parser.py`
+2. Ajouter le parser spécifique
+3. Mettre à jour `SUPPORTED_FORMATS` dans `settings.py`
+
+### Modification des Prompts
+
+Les templates de prompts sont dans `src/llm/prompt_templates.py` :
+
+```python
+RAG_QA = PromptTemplate(
+    system="Tu es un assistant éducatif...",
+    user="Contexte: {context}\nQuestion: {question}\nRéponse:"
+)
+```
+
+### Intégration de Nouveaux Modèles
+
+Pour utiliser un autre modèle LLM :
+
+```bash
+# Télécharger le modèle
+ollama pull mistral:7b
+
+# Modifier la configuration
+echo "OLLAMA_MODEL=mistral:7b" >> .env
+```
+
+---
+
+## 🎓 Aspects Pédagogiques
+
+### Fonctionnalités Éducatives
+
+1. **Réponses Graduées** : Adaptation au niveau de compréhension
+2. **Citations Précises** : Références aux sources avec numéros de page
+3. **Questions de Suivi** : Génération automatique pour approfondir
+4. **Explications Étape par Étape** : Décomposition des concepts complexes
+
+### Optimisations pour l'Apprentissage
+
+- **Prompts Pédagogiques** : Encouragent la réflexion critique
+- **Contexte Préservé** : Maintien de la cohérence conversationnelle
+- **Feedback Constructif** : Suggestions d'amélioration
+- **Multilingue** : Support français optimisé
+
+---
+
+## 🔒 Sécurité et Confidentialité
+
+### Protection des Données
+
+- **Traitement Local** : Aucune donnée envoyée vers des services externes
+- **Chiffrement** : Base de données et communications sécurisées
+- **Isolation** : Environnement containerisé avec Docker
+- **Logs Anonymisés** : Pas de stockage d'informations personnelles
+
+### Bonnes Pratiques
+
+- Variables d'environnement pour configuration sensible
+- Validation des entrées utilisateur
+- Gestion sécurisée des fichiers uploadés
+- Limitation des ressources système
+
+---
+
+## 📚 Documentation Technique
+
+### Guides Disponibles
+
+- **QUICKSTART.md** : Guide de démarrage rapide
+- **DOCKER_GUIDE.md** : Déploiement avec Docker
+- **EVALUATION_REPORT.md** : Rapport d'évaluation détaillé
+- **MATH_FORMULAS_GUIDE.md** : Support des formules mathématiques
+
+### API et Intégration
+
+Le système expose des interfaces Python pour intégration :
+
+```python
+from src.llm.response_generator import ResponseGenerator
+from src.retrieval.hybrid_search import HybridSearchEngine
+
+# Initialisation
+response_gen = ResponseGenerator(...)
+
+# Génération de réponse
+response = response_gen.generate_response(
+    question="Qu'est-ce que l'IoT ?",
+    conversation_id="user_123"
+)
+```
+
+---
+
+## 🤝 Contribution et Développement
+
+### Standards de Code
+
+- **PEP 8** : Style de code Python
+- **Type Hints** : Annotations de types complètes
+- **Docstrings** : Documentation des fonctions
+- **Tests** : Couverture minimale de 80%
+
+### Workflow de Développement
+
+1. Fork du repository
+2. Création d'une branche feature
+3. Développement avec tests
+4. Pull request avec review
+5. Intégration après validation
+
+---
+
+## 📞 Support et Contact
+
+### Ressources d'Aide
+
+- **Issues GitHub** : Signalement de bugs et demandes de fonctionnalités
+- **Documentation** : Guides complets dans le repository
+- **Logs** : Diagnostic automatique des problèmes
+- **Community** : Forum de discussion pour utilisateurs
+
+### Informations de Contact
+
+- **Repository** : https://github.com/SouhailBourhim/ICT_BOT_V2
+- **Auteur** : Étudiant Smart ICT - INPT
+- **Encadrement** : Professeurs du département Smart ICT
+
+---
+
+## 📝 Licence et Crédits
+
+### Licence
+
+Ce projet est distribué sous licence MIT, permettant :
+- Utilisation libre pour l'éducation et la recherche
+- Modification et redistribution
+- Usage commercial avec attribution
+
+### Technologies Utilisées
+
+- **Python 3.11** : Langage principal
+- **Streamlit** : Interface utilisateur web
+- **ChromaDB** : Base de données vectorielle
+- **Ollama** : Orchestration de modèles LLM
+- **Sentence Transformers** : Génération d'embeddings
+- **NLTK** : Traitement du langage naturel
+- **Docker** : Containerisation et déploiement
+
+### Remerciements
+
+- **INPT** : Institut National des Postes et Télécommunications
+- **Département Smart ICT** : Encadrement pédagogique
+- **Communauté Open Source** : Outils et bibliothèques utilisés
+
+---
+
+## 🎯 Conclusion
+
+Ce projet démontre l'implémentation pratique d'un système RAG complet, intégrant les dernières avancées en intelligence artificielle pour créer un assistant éducatif performant. Il illustre la maîtrise de technologies modernes (LLMs, bases de données vectorielles, interfaces web) tout en répondant à un besoin pédagogique réel.
+
+Le système est conçu pour être :
+- **Extensible** : Architecture modulaire permettant l'ajout de fonctionnalités
+- **Performant** : Optimisations pour temps de réponse et utilisation mémoire
+- **Robuste** : Gestion d'erreurs et tests automatisés
+- **Utilisable** : Interface intuitive et documentation complète
+
+**Version** : 1.0.0  
+**Date** : Décembre 2024  
+**Statut** : Production Ready ✅
+
+---
+
+*Développé avec ❤️ pour l'excellence académique à l'INPT Smart ICT*
