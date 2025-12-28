@@ -1,693 +1,682 @@
-# 🐳 Complete Docker Guide - INPT RAG Assistant
+# 🐳 Guide Docker - Assistant RAG INPT
 
-## 🎯 Use Cases
+## Vue d'Ensemble
 
-### 1. **Run on Any PC** ✅
-Deploy the complete application with all enhanced features on any machine with Docker installed.
+Ce guide détaille l'utilisation de Docker pour déployer l'Assistant RAG INPT dans différents environnements. La configuration Docker inclut tous les services nécessaires : application Streamlit, Ollama pour les LLMs, et la persistance des données.
 
-### 2. **Document Ingestion on Powerful PC** ✅
-Process large document batches on a high-performance machine, then transfer the database.
+## 📋 Architecture Docker
 
-### 3. **Production Deployment** ✅
-Deploy with resource limits, health checks, security hardening, and full feature support.
-
-### 4. **Development Environment** ✅
-Full development setup with hot reload, debugging, and all enhanced features enabled.
-
----
-
-## 🚀 Quick Start (3 Steps)
-
-### Step 1: Clone Repository
-```bash
-git clone https://github.com/SouhailBourhim/ICT_BOT_V2.git
-cd ICT_BOT_V2/docker
-```
-
-### Step 2: Start Services
-```bash
-./docker-run.sh
-# Select option 1 (Development) for full features
-# Or option 2 (Production) for optimized deployment
-```
-
-### Step 3: Access App
-Open browser: **http://localhost:8501**
-
-**Enhanced Features Available:**
-- 📊 **Analytics Dashboard**: http://localhost:8501/analytics
-- 🧮 **Math Rendering**: LaTeX support in conversations
-- 💬 **Enhanced Chat**: Improved conversation management
-- 📄 **Advanced Processing**: Contextual document analysis
-
-**That's it!** 🎉
-
----
-
-## 📥 Document Ingestion Workflow
-
-### Scenario: Process Documents on Powerful PC
-
-#### On Powerful PC (for ingestion):
-
-```bash
-# 1. Clone repository
-git clone https://github.com/SouhailBourhim/ICT_BOT_V2.git
-cd ICT_BOT_V2
-
-# 2. Add your documents
-cp /path/to/your/documents/* data/documents/
-
-# 3. Run ingestion
-cd docker
-docker-compose -f docker-compose.ingestion.yml up
-
-# 4. Wait for completion (check logs)
-docker-compose -f docker-compose.ingestion.yml logs -f ingestion
-
-# 5. Package the database
-cd ..
-tar -czf database.tar.gz database/
-```
-
-#### Transfer to Another PC:
-
-```bash
-# 1. Copy database archive to target PC
-scp database.tar.gz user@target-pc:/path/to/ICT_BOT_V2/
-
-# 2. On target PC, extract database
-cd /path/to/ICT_BOT_V2
-tar -xzf database.tar.gz
-
-# 3. Start the application
-cd docker
-docker-compose up -d
-
-# 4. Access at http://localhost:8501
-```
-
-**Result**: Instant access to all processed documents! 🚀
-
----
-
-## 📋 All Deployment Options
-
-### Option 1: Development (Default)
-**Best for**: Local development, testing
-
-```bash
-cd docker
-docker-compose up -d
-```
-
-**Features**:
-- Hot reload for development
-- Debug logging enabled
-- Easy access to logs
-- Volume mounts for live editing
-- All enhanced features enabled (Analytics, Math rendering, etc.)
-- Development-optimized configuration
-
-**Access**: http://localhost:8501
-
----
-
-### Option 2: Production
-**Best for**: Production deployment, public access
-
-```bash
-cd docker
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-**Features**:
-- Resource limits (CPU/Memory)
-- Health checks and monitoring
-- Auto-restart policies
-- Security hardening
-- Read-only data mounts
-- Optional Nginx reverse proxy
-- All enhanced features optimized for production
-- Performance monitoring and analytics
-
-**Access**: http://localhost:8501 (or via Nginx on port 80)
-
----
-
-### Option 3: Ingestion Only
-**Best for**: Batch document processing
-
-```bash
-cd docker
-
-# Add documents first
-cp /path/to/docs/* ../data/documents/
-
-# Run ingestion
-docker-compose -f docker-compose.ingestion.yml up
-```
-
-**Features**:
-- Optimized for batch processing
-- Runs once and exits
-- Minimal resource usage
-- Portable database output
-
----
-
-### Option 4: Custom Build
-**Best for**: Custom configurations
-
-```bash
-# Build custom image
-docker build -f docker/Dockerfile -t my-rag-app ..
-
-# Run with custom settings
-docker run -p 8501:8501 \
-  -e CHUNK_SIZE=500 \
-  -e BATCH_SIZE=64 \
-  -v ./data:/app/data \
-  -v ./database:/app/database \
-  my-rag-app
-```
-
----
-
-## 🚀 Enhanced Features Guide
-
-### Analytics Dashboard
-
-Access comprehensive analytics and metrics:
-
-```bash
-# Start the application
-docker-compose up -d
-
-# Access analytics dashboard
-open http://localhost:8501/analytics
-
-# Check analytics data
-docker-compose exec rag-app ls -la /app/data/conversations/
-```
-
-**Available Metrics:**
-- Conversation statistics and trends
-- Document usage patterns
-- Query performance metrics
-- User interaction analytics
-- System performance monitoring
-
-### Math Rendering
-
-Full LaTeX and mathematical formula support:
-
-```bash
-# Test math rendering
-# In the chat interface, try:
-# "Show me the quadratic formula: $x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$"
-
-# Verify math renderer is working
-docker-compose exec rag-app python -c "
-from app.components.math_renderer import MathRenderer
-renderer = MathRenderer()
-print('Math renderer initialized successfully')
-"
-```
-
-**Supported Math Features:**
-- Inline LaTeX: `$formula$`
-- Display LaTeX: `$$formula$$`
-- Complex equations and symbols
-- Real-time rendering with KaTeX
-- Mathematical expressions in document content
-
-### Enhanced Chat Interface
-
-Improved conversation experience:
-
-```bash
-# Check conversation persistence
-docker-compose exec rag-app ls -la /app/data/conversations/
-
-# Verify conversation manager
-docker-compose exec rag-app python -c "
-from src.conversation.manager import ConversationManager
-manager = ConversationManager()
-print('Conversation manager ready')
-"
-```
-
-**Chat Features:**
-- Persistent conversation history
-- Context-aware responses
-- Enhanced message formatting
-- Real-time interaction
-- Conversation export capabilities
-
-### Advanced Document Processing
-
-Enhanced document ingestion pipeline:
-
-```bash
-# Test document processing
-docker-compose exec rag-app python -c "
-from src.document_processing.contextual_header_generator import ContextualHeaderGenerator
-from src.document_processing.parser import DocumentParser
-print('Document processing pipeline ready')
-"
-
-# Check supported formats
-docker-compose exec rag-app python -c "
-from src.config.settings import settings
-print('Supported formats:', settings.SUPPORTED_FORMATS)
-"
-```
-
-**Processing Features:**
-- Contextual header generation
-- Improved chunking strategies
-- Multi-format support (PDF, DOCX, TXT, MD)
-- Metadata extraction and indexing
-- Enhanced text processing
-
----
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create `.env` file in docker directory:
-
-```bash
-# Project Configuration
-PROJECT_NAME="Assistant Éducatif RAG - INPT Smart ICT"
-VERSION=1.0.0
-LANGUAGE=fr
-
-# LLM Settings
-OLLAMA_MODEL=qwen2.5:3b
-OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_TIMEOUT=180
-LLM_TEMPERATURE=0.1
-LLM_MAX_TOKENS=500
-
-# Embedding Settings
-EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-EMBEDDING_DIMENSION=384
-BATCH_SIZE=32
-
-# Document Processing
-CHUNK_SIZE=1000
-CHUNK_OVERLAP=200
-MIN_CHUNK_SIZE=100
-SUPPORTED_FORMATS=[".pdf", ".txt", ".md", ".docx"]
-
-# Retrieval Settings
-TOP_K_RETRIEVAL=7
-SIMILARITY_THRESHOLD=0.4
-SEMANTIC_WEIGHT=0.7
-BM25_WEIGHT=0.3
-RERANK_TOP_K=3
-
-# Enhanced Features
-ENABLE_TRACKING=true
-ENABLE_METRICS=true
-ENABLE_SPELLING_CORRECTION=true
-ENABLE_QUERY_EXPANSION=true
-
-# Conversation Management
-MAX_CONVERSATION_HISTORY=6
-CONTEXT_WINDOW_SIZE=4096
-
-# Application Settings
-LOG_LEVEL=INFO
-STREAMLIT_PAGE_TITLE="Assistant RAG - INPT Smart ICT"
-STREAMLIT_PAGE_ICON=🎓
-STREAMLIT_LAYOUT=wide
-
-# Performance & Caching
-MAX_WORKERS=4
-CACHE_ENABLED=true
-CACHE_TTL=3600
-```
-
-Then use it:
-```bash
-docker-compose --env-file .env up -d
-```
-
----
-
-## 📊 Performance Optimization
-
-### For Faster Ingestion
+### Services Inclus
 
 ```yaml
-environment:
-  - BATCH_SIZE=64        # Process more documents at once
-  - CHUNK_SIZE=500       # Smaller chunks = faster processing
-  - TOP_K_RETRIEVAL=5    # Fewer results = faster search
+services:
+  ollama:          # Service LLM local
+  rag-app:         # Application Streamlit principale
+  
+volumes:
+  ollama_data:     # Persistance des modèles Ollama
+  # + volumes montés pour données, base, logs
 ```
 
-### For Better Quality
+### Diagramme des Services
 
-```yaml
-environment:
-  - CHUNK_SIZE=1500      # Larger chunks = more context
-  - CHUNK_OVERLAP=300    # More overlap = better continuity
-  - TOP_K_RETRIEVAL=15   # More results = better answers
-  - SEMANTIC_WEIGHT=0.8  # Prioritize semantic understanding
+```mermaid
+graph TB
+    subgraph "Docker Compose"
+        subgraph "Réseau interne"
+            APP[rag-app:8501]
+            OLLAMA[ollama:11434]
+        end
+        
+        subgraph "Volumes"
+            DATA[./data]
+            DB[./database]
+            LOGS[./logs]
+            MODELS[ollama_data]
+        end
+    end
+    
+    subgraph "Host"
+        USER[Utilisateur]
+        FILES[Documents]
+    end
+    
+    USER --> APP
+    FILES --> DATA
+    APP --> OLLAMA
+    APP --> DB
+    APP --> LOGS
+    OLLAMA --> MODELS
 ```
 
-### For Resource-Constrained Systems
+## 🚀 Démarrage Rapide
 
-```yaml
-deploy:
-  resources:
-    limits:
-      cpus: '1'
-      memory: 2G
-environment:
-  - BATCH_SIZE=8
-  - CHUNK_SIZE=500
-```
-
----
-
-## 🔄 Database Transfer Guide
-
-### Export Database from PC A
+### 1. Prérequis
 
 ```bash
-# On PC A (after ingestion)
-cd ICT_BOT_V2
+# Vérifier Docker et Docker Compose
+docker --version          # >= 20.10
+docker-compose --version  # >= 2.0
 
-# Stop services
-cd docker && docker-compose down
-
-# Package database
-cd ..
-tar -czf rag-database-$(date +%Y%m%d).tar.gz database/
-
-# Optional: Include documents
-tar -czf rag-complete-$(date +%Y%m%d).tar.gz database/ data/documents/
+# Vérifier les ressources disponibles
+docker system df
+free -h  # Au moins 8GB RAM recommandé
 ```
 
-### Import Database on PC B
+### 2. Lancement Simple
 
 ```bash
-# On PC B
-cd ICT_BOT_V2
+# Aller dans le répertoire Docker
+cd docker
 
-# Extract database
-tar -xzf rag-database-20251207.tar.gz
-
-# Verify
-ls -lh database/chroma_db/
-
-# Start services
-cd docker && docker-compose up -d
-
-# Verify ingestion
-docker-compose exec rag-app python scripts/ingest_documents.py --stats
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Issue: "Port 8501 already in use"
-
-```bash
-# Option 1: Stop conflicting service
-lsof -ti:8501 | xargs kill
-
-# Option 2: Change port in docker-compose.yml
-ports:
-  - "8502:8501"
-```
-
-### Issue: "Ollama not responding"
-
-```bash
-# Check Ollama logs
-docker-compose logs ollama
-
-# Verify Ollama model
-docker-compose exec ollama ollama list
-
-# Test Ollama API
-curl http://localhost:11434/api/tags
-
-# Check model availability
-docker-compose exec ollama ollama show qwen2.5:3b
-
-# Restart Ollama if needed
-docker-compose restart ollama
-```
-
-### Issue: "Enhanced features not working"
-
-```bash
-# Check analytics dashboard
-curl -I http://localhost:8501/analytics
-
-# Verify math rendering
-docker-compose exec rag-app python -c "import streamlit; print('Streamlit version:', streamlit.__version__)"
-
-# Check conversation persistence
-docker-compose exec rag-app ls -la /app/data/conversations/
-
-# Verify all enhanced modules
-docker-compose exec rag-app python -c "
-try:
-    from app.components.math_renderer import MathRenderer
-    from app.pages.analytics import main as analytics_main
-    from src.conversation.manager import ConversationManager
-    from src.document_processing.contextual_header_generator import ContextualHeaderGenerator
-    print('✅ All enhanced features available')
-except ImportError as e:
-    print('❌ Missing feature:', e)
-"
-```
-
-### Issue: "Configuration errors"
-
-```bash
-# Validate configuration
-docker-compose exec rag-app python -c "
-from src.config.settings import validate_environment_configuration
-results = validate_environment_configuration()
-print('Environment:', results['environment_type'])
-print('Valid:', results['is_valid'])
-for error in results.get('errors', []):
-    print('Error:', error)
-"
-
-# Check environment variables
-docker-compose exec rag-app env | grep -E "(PROJECT_NAME|OLLAMA|EMBEDDING)"
-```
-
-### Issue: "Out of memory"
-
-```bash
-# Check resource usage
-docker stats
-
-# Increase Docker memory (Docker Desktop)
-# Settings > Resources > Memory > 8GB+
-
-# Or use production config with limits
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-### Issue: "Database not found"
-
-```bash
-# Initialize database
-docker-compose exec rag-app python scripts/setup_database.py
-
-# Or reset everything
-docker-compose down -v
+# Lancer tous les services
 docker-compose up -d
+
+# Vérifier l'état
+docker-compose ps
 ```
 
----
+### 3. Accès aux Services
 
-## 📦 Docker Images
+- **Application** : http://localhost:8501
+- **Ollama API** : http://localhost:11434
+- **Logs** : `docker-compose logs -f`
 
-### Pre-built Images (Coming Soon)
+## 🔧 Configuration Détaillée
 
-```bash
-# Pull from Docker Hub
-docker pull souhailbourhim/inpt-rag-app:latest
-
-# Run
-docker run -p 8501:8501 souhailbourhim/inpt-rag-app:latest
-```
-
-### Build Your Own
-
-```bash
-# App image
-docker build -f docker/Dockerfile -t inpt-rag-app:latest .
-
-# Ingestion image
-docker build -f docker/Dockerfile.ingestion -t inpt-rag-ingestion:latest .
-
-# Push to your registry
-docker tag inpt-rag-app:latest your-registry/inpt-rag-app:latest
-docker push your-registry/inpt-rag-app:latest
-```
-
----
-
-## 🌐 Cloud Deployment
-
-### AWS ECS
-
-```bash
-# 1. Push image to ECR
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin your-account.dkr.ecr.us-east-1.amazonaws.com
-docker tag inpt-rag-app:latest your-account.dkr.ecr.us-east-1.amazonaws.com/inpt-rag-app:latest
-docker push your-account.dkr.ecr.us-east-1.amazonaws.com/inpt-rag-app:latest
-
-# 2. Create ECS task definition using docker-compose.prod.yml
-# 3. Deploy to ECS cluster
-```
-
-### Google Cloud Run
-
-```bash
-# 1. Build and push
-gcloud builds submit --tag gcr.io/your-project/inpt-rag-app
-
-# 2. Deploy
-gcloud run deploy inpt-rag-app \
-  --image gcr.io/your-project/inpt-rag-app \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated
-```
-
-### Azure Container Instances
-
-```bash
-# 1. Push to ACR
-az acr build --registry your-registry --image inpt-rag-app:latest .
-
-# 2. Deploy
-az container create \
-  --resource-group your-rg \
-  --name inpt-rag-app \
-  --image your-registry.azurecr.io/inpt-rag-app:latest \
-  --ports 8501
-```
-
----
-
-## 📝 Files Reference
+### 1. Structure des Fichiers
 
 ```
 docker/
-├── Dockerfile                      # Main application image
-├── Dockerfile.ingestion            # Ingestion-only image
-├── docker-compose.yml              # Development setup
-├── docker-compose.prod.yml         # Production setup
-├── docker-compose.ingestion.yml    # Ingestion setup
-├── entrypoint.sh                   # App startup script
-├── entrypoint-ingestion.sh         # Ingestion startup script
-├── docker-run.sh                   # Quick start script
-├── .dockerignore                   # Files to exclude from build
-├── nginx.conf                      # Nginx reverse proxy config
-└── README.md                       # Detailed Docker documentation
+├── Dockerfile                    # Image de l'application
+├── docker-compose.yml           # Configuration développement
+├── docker-compose.prod.yml      # Configuration production
+├── docker-compose.dev.yml       # Configuration développement avancée
+├── entrypoint.sh                # Script d'initialisation
+├── docker-health-check.sh       # Vérification de santé
+├── docker-run.sh               # Script de déploiement rapide
+└── nginx.conf                  # Configuration Nginx (prod)
 ```
 
----
+### 2. Dockerfile Optimisé
 
-## ✅ Checklist for Production
+```dockerfile
+# Multi-stage build pour optimisation
+FROM python:3.11-slim
 
-### Basic Setup
-- [ ] Use `docker-compose.prod.yml`
-- [ ] Set resource limits (CPU/Memory)
-- [ ] Enable health checks
-- [ ] Use read-only volumes for data
-- [ ] Configure environment variables properly
+# Variables d'environnement optimisées
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
 
-### Security & Infrastructure
-- [ ] Set up Nginx reverse proxy
-- [ ] Configure SSL/TLS certificates
-- [ ] Set up monitoring (Prometheus/Grafana)
-- [ ] Configure log aggregation
-- [ ] Set up automated backups
-- [ ] Test disaster recovery
+# Installation des dépendances système
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl git poppler-utils tesseract-ocr \
+    && rm -rf /var/lib/apt/lists/*
 
-### Enhanced Features Validation
-- [ ] Verify analytics dashboard accessibility (`/analytics`)
-- [ ] Test math rendering with LaTeX formulas
-- [ ] Confirm conversation persistence across restarts
-- [ ] Validate document processing pipeline
-- [ ] Check all enhanced modules are loaded
+# Installation Python avec cache optimisé
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-### Performance & Monitoring
-- [ ] Optimize configuration for production workload
-- [ ] Set up performance monitoring
-- [ ] Configure caching appropriately
-- [ ] Test under expected load
-- [ ] Monitor resource usage patterns
+# Téléchargement des données NLTK
+RUN python -c "import nltk; nltk.download('punkt', quiet=True)"
 
-### Documentation & Maintenance
-- [ ] Document deployment process
-- [ ] Set up CI/CD pipeline
-- [ ] Create runbooks for common issues
-- [ ] Train team on troubleshooting procedures
-- [ ] Establish update and rollback procedures
+# Configuration de l'application
+WORKDIR /app
+COPY src/ ./src/
+COPY app/ ./app/
+COPY scripts/ ./scripts/
 
----
+# Health check intégré
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8501/_stcore/health || exit 1
 
-## 🎓 Examples
+# Point d'entrée avec initialisation
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-### Example 1: Quick Test
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["streamlit", "run", "app/chat.py", "--server.port=8501", "--server.address=0.0.0.0"]
+```
+
+### 3. Configuration Docker Compose
+
+#### Développement (`docker-compose.yml`)
+
+```yaml
+version: '3.8'
+
+services:
+  # Service Ollama pour LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: inpt-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_MODELS=/root/.ollama/models
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Application RAG principale
+  rag-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: inpt-rag-app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ../data:/app/data
+      - ../database:/app/database
+      - ../logs:/app/logs
+    environment:
+      # Configuration adaptée pour Docker
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=qwen2.5:3b
+      - BASE_DIR=/app
+      - DATA_DIR=/app/data
+      - DATABASE_DIR=/app/database
+      - LOGS_DIR=/app/logs
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  ollama_data:
+    driver: local
+```
+
+#### Production (`docker-compose.prod.yml`)
+
+```yaml
+version: '3.8'
+
+services:
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: inpt-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - rag-app
+    restart: unless-stopped
+
+  # Configuration production pour l'app
+  rag-app:
+    extends:
+      file: docker-compose.yml
+      service: rag-app
+    environment:
+      # Optimisations production
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_ENABLE_CORS=false
+      - STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=true
+      - STREAMLIT_SERVER_MAX_UPLOAD_SIZE=200
+      - LOG_LEVEL=INFO
+      - CACHE_TTL=7200
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '4'
+        reservations:
+          memory: 4G
+          cpus: '2'
+```
+
+## 🔄 Script d'Initialisation (entrypoint.sh)
+
+### Fonctionnalités du Script
 
 ```bash
-cd docker
-./docker-run.sh
-# Select 1 (Development)
-# Open http://localhost:8501
+#!/bin/bash
+set -e
+
+# Fonctions de logging
+log_info() { echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $1"; }
+log_error() { echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $1" >&2; }
+log_success() { echo "$(date '+%Y-%m-%d %H:%M:%S') [SUCCESS] $1"; }
+
+# 1. Validation de la configuration
+validate_configuration() {
+    log_info "🔍 Validating configuration..."
+    
+    # Vérifier les variables requises
+    required_vars=("OLLAMA_BASE_URL" "OLLAMA_MODEL" "PROJECT_NAME")
+    for var in "${required_vars[@]}"; do
+        if [ -z "${!var}" ]; then
+            log_error "Missing required variable: $var"
+            exit 1
+        fi
+    done
+}
+
+# 2. Attente d'Ollama avec retry exponentiel
+wait_for_ollama() {
+    log_info "⏳ Waiting for Ollama service..."
+    
+    local max_retries=30
+    local counter=0
+    local backoff=1
+    
+    while ! curl -s --connect-timeout 5 "$OLLAMA_BASE_URL/api/tags" > /dev/null; do
+        counter=$((counter + 1))
+        if [ $counter -gt $max_retries ]; then
+            log_error "Failed to connect to Ollama after $max_retries attempts"
+            exit 1
+        fi
+        
+        log_info "Attempt $counter/$max_retries - waiting ${backoff}s..."
+        sleep $backoff
+        backoff=$((backoff < 8 ? backoff * 2 : 8))
+    done
+    
+    log_success "Ollama service is ready!"
+}
+
+# 3. Gestion des modèles avec téléchargement automatique
+manage_ollama_model() {
+    log_info "🔍 Checking LLM model availability..."
+    
+    # Vérifier si le modèle existe
+    if curl -s "$OLLAMA_BASE_URL/api/tags" | grep -q "\"name\":\"$OLLAMA_MODEL\""; then
+        log_success "Model $OLLAMA_MODEL is available"
+        return 0
+    fi
+    
+    log_info "📥 Downloading model $OLLAMA_MODEL (this may take several minutes)..."
+    
+    # Télécharger le modèle
+    curl -s -X POST "$OLLAMA_BASE_URL/api/pull" \
+        -H "Content-Type: application/json" \
+        -d "{\"name\": \"$OLLAMA_MODEL\"}"
+    
+    # Attendre que le téléchargement soit terminé
+    local wait_counter=0
+    while [ $wait_counter -lt 60 ]; do
+        if curl -s "$OLLAMA_BASE_URL/api/tags" | grep -q "\"name\":\"$OLLAMA_MODEL\""; then
+            log_success "Model $OLLAMA_MODEL downloaded successfully!"
+            return 0
+        fi
+        wait_counter=$((wait_counter + 1))
+        sleep 10
+    done
+    
+    log_error "Model download timeout"
+    exit 1
+}
+
+# 4. Initialisation des répertoires
+initialize_directories() {
+    log_info "📁 Initializing directories..."
+    
+    python3 -c "
+from src.config.settings import setup_directories
+setup_directories()
+print('Directories initialized successfully')
+" || {
+        log_error "Failed to initialize directories"
+        exit 1
+    }
+}
+
+# 5. Validation de l'état de l'application
+validate_application_state() {
+    log_info "🔍 Validating application state..."
+    
+    # Vérifier ChromaDB
+    if [ ! -d "/app/database/chroma_db" ]; then
+        mkdir -p "/app/database/chroma_db"
+    fi
+    
+    # Vérifier les dépendances Python
+    python3 -c "
+import streamlit, chromadb, sentence_transformers
+print('All dependencies available')
+" || {
+        log_error "Missing Python dependencies"
+        exit 1
+    }
+}
+
+# Fonction principale
+main() {
+    log_info "🚀 Starting INPT RAG Assistant initialization..."
+    
+    validate_configuration
+    wait_for_ollama
+    manage_ollama_model
+    initialize_directories
+    validate_application_state
+    
+    log_success "✅ System initialization completed!"
+    log_info "🚀 Starting application..."
+    
+    # Exécuter la commande principale
+    exec "$@"
+}
+
+main "$@"
 ```
 
-### Example 2: Process 1000 PDFs
+## 📊 Gestion des Données
+
+### 1. Volumes et Persistance
+
+```yaml
+# Configuration des volumes
+volumes:
+  # Volume nommé pour modèles Ollama
+  ollama_data:
+    driver: local
+    
+  # Volumes montés pour données applicatives
+  - ../data:/app/data                    # Documents et conversations
+  - ../database:/app/database            # ChromaDB et SQLite
+  - ../logs:/app/logs                    # Logs applicatifs
+```
+
+### 2. Sauvegarde des Données
 
 ```bash
-# Copy PDFs
-cp ~/research-papers/*.pdf ../data/documents/
+# Script de sauvegarde Docker
+#!/bin/bash
+BACKUP_DIR="./backups/$(date +%Y%m%d_%H%M%S)"
+mkdir -p $BACKUP_DIR
 
-# Run ingestion
-docker-compose -f docker-compose.ingestion.yml up
+# Sauvegarder les volumes
+docker run --rm -v inpt-rag_ollama_data:/data -v $PWD/$BACKUP_DIR:/backup \
+    alpine tar czf /backup/ollama_models.tar.gz -C /data .
 
-# Check results
-docker-compose -f docker-compose.ingestion.yml logs ingestion
+# Sauvegarder les données montées
+tar czf $BACKUP_DIR/application_data.tar.gz data/ database/ logs/
+
+echo "Backup completed in $BACKUP_DIR"
 ```
 
-### Example 3: Production with Nginx
+### 3. Restauration des Données
 
 ```bash
-# Start with Nginx
-docker-compose -f docker-compose.prod.yml --profile with-nginx up -d
+# Restauration depuis sauvegarde
+#!/bin/bash
+BACKUP_DIR=$1
 
-# Access via Nginx
-open http://localhost
+if [ -z "$BACKUP_DIR" ]; then
+    echo "Usage: $0 <backup_directory>"
+    exit 1
+fi
+
+# Arrêter les services
+docker-compose down
+
+# Restaurer les volumes
+docker run --rm -v inpt-rag_ollama_data:/data -v $PWD/$BACKUP_DIR:/backup \
+    alpine tar xzf /backup/ollama_models.tar.gz -C /data
+
+# Restaurer les données montées
+tar xzf $BACKUP_DIR/application_data.tar.gz
+
+# Redémarrer les services
+docker-compose up -d
 ```
 
----
+## 🔧 Commandes Utiles
 
-## 🆘 Support
+### 1. Gestion des Services
 
-- **Docker Issues**: See `docker/README.md`
-- **Application Issues**: See main `README.md`
-- **GitHub Issues**: https://github.com/SouhailBourhim/ICT_BOT_V2/issues
+```bash
+# Démarrage et arrêt
+docker-compose up -d              # Démarrer en arrière-plan
+docker-compose down               # Arrêter tous les services
+docker-compose restart rag-app   # Redémarrer un service
 
----
+# Monitoring
+docker-compose ps                 # État des services
+docker-compose logs -f rag-app   # Logs en temps réel
+docker-compose top               # Processus en cours
+```
 
-**🐳 Docker makes deployment easy! Enjoy!**
+### 2. Maintenance
+
+```bash
+# Mise à jour des images
+docker-compose pull
+docker-compose up -d --force-recreate
+
+# Nettoyage
+docker-compose down -v           # Supprimer volumes
+docker system prune -f           # Nettoyer le système
+docker volume prune -f           # Nettoyer les volumes orphelins
+```
+
+### 3. Debug et Développement
+
+```bash
+# Accès shell dans les conteneurs
+docker-compose exec rag-app bash
+docker-compose exec ollama bash
+
+# Exécution de commandes
+docker-compose exec rag-app python scripts/ingest_documents.py --stats
+docker-compose exec ollama ollama list
+
+# Reconstruction avec cache
+docker-compose build --no-cache rag-app
+```
+
+## 🚀 Déploiement Production
+
+### 1. Configuration Nginx
+
+```nginx
+# nginx.conf pour production
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream rag_app {
+        server rag-app:8501;
+    }
+    
+    server {
+        listen 80;
+        server_name votre-domaine.com;
+        
+        # Redirection HTTPS
+        return 301 https://$server_name$request_uri;
+    }
+    
+    server {
+        listen 443 ssl http2;
+        server_name votre-domaine.com;
+        
+        # Configuration SSL
+        ssl_certificate /etc/nginx/ssl/cert.pem;
+        ssl_certificate_key /etc/nginx/ssl/key.pem;
+        
+        # Optimisations SSL
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512;
+        ssl_prefer_server_ciphers off;
+        
+        # Configuration Streamlit
+        location / {
+            proxy_pass http://rag_app;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            
+            # Timeouts pour Streamlit
+            proxy_read_timeout 86400;
+            proxy_send_timeout 86400;
+        }
+        
+        # Sécurité
+        add_header X-Frame-Options DENY;
+        add_header X-Content-Type-Options nosniff;
+        add_header X-XSS-Protection "1; mode=block";
+    }
+}
+```
+
+### 2. Script de Déploiement
+
+```bash
+#!/bin/bash
+# deploy.sh - Script de déploiement production
+
+set -e
+
+echo "🚀 Déploiement INPT RAG Assistant"
+
+# Variables
+ENVIRONMENT=${1:-production}
+BACKUP_BEFORE_DEPLOY=${2:-true}
+
+# Sauvegarde avant déploiement
+if [ "$BACKUP_BEFORE_DEPLOY" = "true" ]; then
+    echo "📦 Création d'une sauvegarde..."
+    ./backup.sh
+fi
+
+# Mise à jour du code
+echo "📥 Mise à jour du code..."
+git pull origin main
+
+# Construction des nouvelles images
+echo "🔨 Construction des images..."
+docker-compose -f docker-compose.prod.yml build --no-cache
+
+# Déploiement avec zero-downtime
+echo "🔄 Déploiement des services..."
+docker-compose -f docker-compose.prod.yml up -d
+
+# Vérification de santé
+echo "🏥 Vérification de santé..."
+sleep 30
+./docker-health-check.sh
+
+# Nettoyage
+echo "🧹 Nettoyage..."
+docker system prune -f
+
+echo "✅ Déploiement terminé avec succès!"
+```
+
+### 3. Monitoring et Alertes
+
+```yaml
+# docker-compose.monitoring.yml
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+
+volumes:
+  prometheus_data:
+  grafana_data:
+```
+
+## 🔍 Dépannage Docker
+
+### Problèmes Courants
+
+#### Services qui ne démarrent pas
+```bash
+# Vérifier les logs
+docker-compose logs rag-app
+docker-compose logs ollama
+
+# Vérifier les ressources
+docker stats
+free -h
+
+# Redémarrer proprement
+docker-compose down
+docker-compose up -d
+```
+
+#### Problèmes de réseau
+```bash
+# Vérifier les réseaux Docker
+docker network ls
+docker network inspect docker_default
+
+# Tester la connectivité
+docker-compose exec rag-app curl http://ollama:11434/api/tags
+```
+
+#### Problèmes de volumes
+```bash
+# Vérifier les volumes
+docker volume ls
+docker volume inspect inpt-rag_ollama_data
+
+# Permissions
+docker-compose exec rag-app ls -la /app/data
+```
+
+### Logs de Debug
+
+```bash
+# Activer le debug complet
+export COMPOSE_LOG_LEVEL=DEBUG
+docker-compose --verbose up
+
+# Logs détaillés d'un service
+docker-compose logs --details rag-app
+
+# Suivre les logs en temps réel
+docker-compose logs -f --tail=100
+```
+
+Cette configuration Docker complète permet un déploiement robuste et scalable de l'Assistant RAG INPT, avec toutes les optimisations nécessaires pour la production.

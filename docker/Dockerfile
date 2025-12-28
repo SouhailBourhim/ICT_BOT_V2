@@ -1,5 +1,5 @@
 # Dockerfile for INPT RAG Assistant
-FROM python:3.11-slim
+FROM python:3.11-slim as base
 
 # Metadata
 LABEL maintainer="INPT Smart ICT"
@@ -41,6 +41,44 @@ RUN python -c "import nltk; nltk.download('punkt', quiet=True); nltk.download('s
 RUN mkdir -p data/documents data/processed data/conversations data/embeddings \
     database/chroma_db logs \
     && chmod -R 755 data database logs
+
+# Development stage
+FROM base as development
+
+# Install development dependencies
+RUN pip install --no-cache-dir \
+    debugpy \
+    pytest \
+    pytest-cov \
+    black \
+    flake8 \
+    mypy \
+    ipython \
+    jupyter
+
+# Create development directories
+RUN mkdir -p dev-config dev-logs
+
+# Copy source code (for development, this will be overridden by volume mounts)
+COPY src/ ./src/
+COPY app/ ./app/
+COPY scripts/ ./scripts/
+
+# Copy configuration files
+COPY .env.example .env.example
+
+# Expose development ports
+EXPOSE 8501 8502 5678
+
+# Development entrypoint
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["streamlit", "run", "app/chat.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=false", "--server.runOnSave=true"]
+
+# Production stage
+FROM base as production
 
 # Copy source code (separate from dependencies for better caching)
 COPY src/ ./src/
