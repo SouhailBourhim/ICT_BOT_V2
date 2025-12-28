@@ -1,0 +1,134 @@
+version: '3.8'
+
+# Development-specific Docker Compose override
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Ollama LLM Service - Development Configuration
+  ollama:
+    environment:
+      # Development-specific Ollama settings
+      - OLLAMA_DEBUG=1
+      - OLLAMA_VERBOSE=1
+      - OLLAMA_KEEP_ALIVE=24h  # Keep models loaded longer in dev
+    volumes:
+      # Additional volume for development model testing
+      - ./dev-models:/root/.ollama/dev-models
+    ports:
+      # Expose additional debug port
+      - "11435:11435"
+
+  # RAG Application - Development Configuration
+  rag-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: development  # Use development build stage if available
+    environment:
+      # Development-specific environment variables
+      - LOG_LEVEL=DEBUG
+      - STREAMLIT_SERVER_RUNONFORK=true
+      - STREAMLIT_BROWSER_GATHERSTATS=false
+      - STREAMLIT_SERVER_FILEWATCH=true
+      - STREAMLIT_SERVER_HEADLESS=false
+      - STREAMLIT_GLOBAL_DEVELOPMENTMODE=true
+      
+      # Development database settings
+      - CHROMA_COLLECTION_NAME=inpt_smart_ict_docs_dev
+      - SQLITE_DB_PATH=/app/database/metadata_dev.db
+      - SQLITE_DB_URL=sqlite:////app/database/metadata_dev.db
+      
+      # Development performance settings
+      - CACHE_ENABLED=false  # Disable caching for development
+      - ENABLE_TRACKING=false  # Disable analytics tracking in dev
+      - ENABLE_METRICS=false
+      
+      # Development debugging
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - STREAMLIT_LOGGER_LEVEL=debug
+    
+    volumes:
+      # Mount source code for hot reload
+      - ../src:/app/src
+      - ../app:/app/app
+      - ../scripts:/app/scripts
+      
+      # Mount development data directories
+      - ../data:/app/data
+      - ../database:/app/database
+      - ../logs:/app/logs
+      
+      # Development-specific volumes
+      - ./dev-config:/app/dev-config
+      - ./dev-logs:/app/dev-logs
+    
+    ports:
+      # Expose additional development ports
+      - "8502:8502"  # Alternative Streamlit port
+      - "5678:5678"  # Python debugger port (debugpy)
+    
+    command: >
+      sh -c "
+        echo 'Starting in development mode...' &&
+        pip install debugpy &&
+        python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m streamlit run app/chat.py 
+        --server.port=8501 
+        --server.address=0.0.0.0 
+        --server.headless=false
+        --server.runOnSave=true
+        --server.fileWatcherType=auto
+        --browser.gatherUsageStats=false
+        --global.developmentMode=true
+      "
+    
+    # Development-specific health check (more frequent)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Development Tools Container
+  dev-tools:
+    image: python:3.11-slim
+    container_name: inpt-dev-tools
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - PYTHONPATH=/workspace
+    command: >
+      sh -c "
+        pip install pytest pytest-cov black flake8 mypy pre-commit &&
+        echo 'Development tools ready!' &&
+        tail -f /dev/null
+      "
+    profiles:
+      - dev-tools
+
+  # Database Admin Interface (optional)
+  db-admin:
+    image: adminer:latest
+    container_name: inpt-db-admin
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=rag-app
+    profiles:
+      - db-admin
+
+volumes:
+  # Development-specific volumes
+  dev-models:
+    driver: local
+  dev-config:
+    driver: local
+  dev-logs:
+    driver: local
+
+networks:
+  default:
+    name: inpt-rag-dev-network

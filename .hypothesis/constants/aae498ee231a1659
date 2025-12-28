@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/document_processing/chunker.py
+# hypothesis_version: 6.148.8
+
+[0.0, 100, 200, 500, 1000, '.docx', '.markdown', '.md', '.pdf', '.txt', '[.!?]\\s+', '\\n#{1,6}\\s+.+\\n', '\\n[A-Z][^.!?]*:', '\\n[IVX]+\\.\\s+', '\\n\\d+\\.\\s+[A-Z]', '__dict__', '__main__', 'char_count', 'chunk_method', 'confidence_score', 'content', 'contextual_header', 'document', 'document_type', 'docx', 'end', 'filename', 'filepath', 'format', 'has_overlap', 'has_pages', 'has_sections', 'langchain_metadata', 'langchain_recursive', 'langchain_semantic', 'markdown', 'original_text', 'page_number', 'pdf', 'relative_position', 'section', 'section_index', 'start', 'start_index', 'test.md', 'text', 'title', 'token_count', 'txt', 'unknown', 'word_count']

@@ -1,0 +1,68 @@
+{
+  "test_cases": [
+    {
+      "id": 1,
+      "question": "Qu'est-ce que le clustering ?",
+      "expected_keywords": ["partitionner", "groupes", "homogènes", "similaires"],
+      "expected_concepts": ["clustering", "exploration de données"],
+      "should_not_contain": ["transport", "voyage", "prix", "photo"],
+      "category": "definition"
+    },
+    {
+      "id": 2,
+      "question": "Quels sont les types d'apprentissage supervisé ?",
+      "expected_keywords": ["classification", "régression"],
+      "expected_concepts": ["supervisé", "types"],
+      "should_not_contain": ["clustering", "non-supervisé"],
+      "category": "enumeration"
+    },
+    {
+      "id": 3,
+      "question": "Comment fonctionne K-means ?",
+      "expected_keywords": ["centroïdes", "clusters", "itératif"],
+      "expected_concepts": ["K-means", "algorithme"],
+      "should_not_contain": ["SVM", "régression"],
+      "category": "explanation"
+    },
+    {
+      "id": 4,
+      "question": "Quelle est la différence entre supervisé et non-supervisé ?",
+      "expected_keywords": ["labels", "étiquettes", "supervisé", "non-supervisé"],
+      "expected_concepts": ["apprentissage", "différence"],
+      "should_not_contain": [],
+      "category": "comparison"
+    },
+    {
+      "id": 5,
+      "question": "Qu'est-ce que SVM ?",
+      "expected_keywords": ["Support Vector Machine", "classification"],
+      "expected_concepts": ["SVM", "algorithme"],
+      "should_not_contain": ["clustering", "K-means"],
+      "category": "definition"
+    },
+    {
+      "id": 6,
+      "question": "Quels sont les avantages de K-means ?",
+      "expected_keywords": ["simple", "rapide", "grands ensembles"],
+      "expected_concepts": ["K-means", "avantages"],
+      "should_not_contain": [],
+      "category": "characteristics"
+    },
+    {
+      "id": 7,
+      "question": "Qu'est-ce que la régression ?",
+      "expected_keywords": ["prédire", "quantitative", "nombre", "variable"],
+      "expected_concepts": ["régression", "supervisé"],
+      "should_not_contain": ["clustering", "catégorie"],
+      "category": "definition"
+    },
+    {
+      "id": 8,
+      "question": "Qu'est-ce que la classification ?",
+      "expected_keywords": ["catégorie", "classe", "qualitative"],
+      "expected_concepts": ["classification", "supervisé"],
+      "should_not_contain": ["régression", "quantitative"],
+      "category": "definition"
+    }
+  ]
+}

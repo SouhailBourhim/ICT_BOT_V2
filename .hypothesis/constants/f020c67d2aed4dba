@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/app/components/math_renderer.py
+# hypothesis_version: 6.148.8
+
+['$', '$$', '$$\\1$$', '(\\$\\$.*?\\$\\$)', 'Y\\^iY\\^i', 'Y_i', 'YiYi', '\\[\\s*([^\\]]+?)\\s*\\]', '\\\\hat{Y}_i', 'latex']

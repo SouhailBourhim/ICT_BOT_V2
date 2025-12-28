@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/document_processing/embedding_generator.py
+# hypothesis_version: 6.148.8
+
+['Liste de textes vide', '__main__', 'batch_size', 'camembert', 'cpu', 'cuda', 'device', 'embedding_dimension', 'max_seq_length', 'model_name', 'multilingual_mini', 'multilingual_mpnet']

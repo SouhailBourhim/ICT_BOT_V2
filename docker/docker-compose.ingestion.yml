@@ -1,0 +1,83 @@
+# Docker Compose for Document Ingestion
+version: '3.8'
+
+services:
+  # Ollama Service (for embeddings)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: inpt-ollama-ingestion
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_MODELS=/root/.ollama/models
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Document Ingestion Service
+  ingestion:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestion
+    container_name: inpt-ingestion
+    volumes:
+      # Mount your documents here
+      - ../data/documents:/app/data/documents:ro
+      # Persistent database and processed data
+      - ../database:/app/database
+      - ../data/processed:/app/data/processed
+      - ../data/embeddings:/app/data/embeddings
+      # Logs
+      - ../logs:/app/logs
+    environment:
+      # Project Information
+      - PROJECT_NAME=Assistant Éducatif RAG - INPT Smart ICT
+      - VERSION=1.0.0
+      - LANGUAGE=fr
+      
+      # Ollama Configuration
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_TIMEOUT=180
+      
+      # Embedding Configuration
+      - EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+      - EMBEDDING_DIMENSION=384
+      - BATCH_SIZE=32
+      
+      # Document Processing
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+      - MIN_CHUNK_SIZE=100
+      
+      # ChromaDB Configuration
+      - CHROMA_COLLECTION_NAME=inpt_smart_ict_docs
+      
+      # Logging
+      - LOG_LEVEL=INFO
+      
+      # Performance
+      - MAX_WORKERS=4
+      
+      # System
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      ollama:
+        condition: service_healthy
+    # Run once and exit
+    restart: "no"
+
+volumes:
+  ollama_data:
+    driver: local
+
+networks:
+  default:
+    name: inpt-ingestion-network

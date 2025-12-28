@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/config/settings.py
+# hypothesis_version: 6.148.8
+
+[0.1, 0.3, 0.4, 0.7, 100, 180, 200, 384, 500, 1000, 3600, 4096, '.docx', '.env', '.md', '.pdf', '.txt', '1.0.0', 'INFO', '__main__', 'chroma_db', 'data', 'database', 'documents', 'fr', 'inpt_smart_ict_docs', 'logs', 'metadata.db', 'processed', 'qwen2.5:3b', 'utf-8', 'wide', '🎓']

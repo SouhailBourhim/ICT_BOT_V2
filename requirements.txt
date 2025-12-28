@@ -1,0 +1,60 @@
+# Core Dependencies
+python-dotenv==1.0.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Document Processing
+pypdf==3.17.0
+python-docx==1.1.0
+markdown==3.5.1
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# Text Processing (French support)
+spacy==3.7.2
+# Run: python -m spacy download fr_core_news_md
+nltk==3.8.1
+langdetect==1.0.9
+
+# Embeddings & Vector Store
+sentence-transformers==2.2.2
+chromadb-client==0.4.22
+faiss-cpu==1.7.4
+
+# Search & Retrieval
+rank-bm25==0.2.2
+
+# LLM Integration
+ollama==0.1.6
+langchain==0.1.20
+langchain-community==0.0.38
+langchain-text-splitters==0.0.2
+langchain-experimental==0.0.62
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.13.0
+
+# Web Interface
+streamlit==1.29.0
+streamlit-chat==0.1.1
+plotly==5.18.0
+pandas==2.1.4
+
+# Utils
+tqdm==4.66.1
+loguru==0.7.2
+requests==2.31.0
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-asyncio==0.21.1
+
+# Code Quality
+black==23.12.1
+flake8==6.1.0
+mypy==1.7.1
+
+# Monitoring
+prometheus-client==0.19.0

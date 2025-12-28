@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/llm/prompt_templates.py
+# hypothesis_version: 6.148.8
+
+[2000, '\n\n---\n\n', '\n---\n', '\n=== USER PROMPT ===', 'Assistant', 'Document inconnu', '__main__', 'cours_iot.pdf', 'filename', 'metadata', 'page_number', 'role', 'text', 'user', 'Étudiant']

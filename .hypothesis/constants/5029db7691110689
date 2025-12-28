@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/document_processing/parser.py
+# hypothesis_version: 6.148.8
+
+['.docx', '.md', '.pdf', '.txt', 'Unknown', '\\n\\s*\\n', '\\s+', '__main__', '```', 'author', 'char_count', 'codehilite', 'content', 'core_properties', 'cp1252', 'created_at', 'docx', 'encoding', 'error', 'extension', 'extra', 'file_size', 'filename', 'filepath', 'format', 'h1', 'h2', 'h3', 'has_code_blocks', 'headers', 'html.parser', 'latin-1', 'line_count', 'markdown', 'modified_at', 'num_pages', 'page_number', 'paragraph_count', 'pdf', 'pdf_metadata', 'r', 'rb', 'subject', 'tables_count', 'title', 'txt', 'utf-8']

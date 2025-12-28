@@ -1,0 +1,4 @@
+# file: /Users/apple/Desktop/ICT BOT v2/inpt-rag-assistant/src/llm/response_generator.py
+# hypothesis_version: 6.148.8
+
+[0.0, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7, 0.8, 1.0, 200, 300, 2000, '\n\n**Sources:**\n', 'Source inconnue', '\\[Source:', '\\n\\s*\\n\\s*\\n', '\\s+', '^\\w+\\s*\\?$', '^\\w+\\s+\\w+\\s*\\??$', '__main__', 'content', 'error', 'filename', "je n'ai pas", 'je ne sais pas', 'low_confidence', 'metadata', 'name', 'no_context_found', 'num_chunks_retrieved', 'num_chunks_used', 'page_number', 'pages', 'question', 'role', 'score', 'text', 'user', '✅ Réponse générée']
