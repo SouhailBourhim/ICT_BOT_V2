@@ -52,10 +52,20 @@ class Settings(BaseSettings):
     RERANK_TOP_K: int = 3  # Réduit de 5 à 3 pour réponses plus focalisées
     BM25_INDEX_PATH: Path = DATABASE_DIR / "bm25_index.pkl"
     
+    # LLM Configuration
+    LLM_PROVIDER: str = "ollama"  # Primary LLM provider: ollama, gemini
+    LLM_FALLBACK_PROVIDER: str = "ollama"  # Fallback provider if primary fails
+    
     # Ollama LLM
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "qwen2.5:3b"  # Meilleur pour RAG, moins d'hallucinations
     OLLAMA_TIMEOUT: int = 180  # Plus long pour 3B params
+    
+    # Google Gemini
+    GOOGLE_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"  # Available models: gemini-2.5-flash, gemini-2.5-pro, gemini-flash-latest
+    
+    # General LLM Settings
     LLM_TEMPERATURE: float = 0.1  # Légèrement plus créatif que 0.0
     LLM_MAX_TOKENS: int = 500  # Augmenté pour réponses plus complètes
     
@@ -92,6 +102,24 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=True
     )
+
+    @field_validator('LLM_PROVIDER')
+    @classmethod
+    def validate_llm_provider(cls, v):
+        """Validate LLM provider"""
+        valid_providers = ['ollama', 'gemini']
+        if v.lower() not in valid_providers:
+            raise ValueError(f'LLM_PROVIDER must be one of: {valid_providers}')
+        return v.lower()
+
+    @field_validator('LLM_FALLBACK_PROVIDER')
+    @classmethod
+    def validate_llm_fallback_provider(cls, v):
+        """Validate LLM fallback provider"""
+        valid_providers = ['ollama', 'gemini']
+        if v.lower() not in valid_providers:
+            raise ValueError(f'LLM_FALLBACK_PROVIDER must be one of: {valid_providers}')
+        return v.lower()
 
     @field_validator('OLLAMA_BASE_URL')
     @classmethod

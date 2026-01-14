@@ -1,0 +1,18 @@
+{
+  "id": "e5622c5b-9477-4585-8bb9-98c2fb5ceef1",
+  "title": "Conversation 14/01/2026 14:19",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "Le nom du professeur pour le cours de Big Data est Iyad LAHSEN CHERIF. Ce nom est trouvé sur la première page du document \"bigdata-v3.pdf\" à la page 5.",
+      "timestamp": "2026-01-14T14:19:31.718905",
+      "metadata": {
+        "confidence": 0.5543781278280963,
+        "num_sources": 1
+      }
+    }
+  ],
+  "created_at": "2026-01-14T14:19:31.718682",
+  "updated_at": "2026-01-14T14:19:31.718908",
+  "metadata": {}
+}

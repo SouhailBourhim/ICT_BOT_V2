@@ -189,6 +189,86 @@ class ChunkCompatibilityLayer:
         
         return " > ".join(title_parts)
     
+    def normalize_search_results(self, results: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Normalize search results to provide consistent format
+        
+        Args:
+            results: Raw search results from vector store
+            
+        Returns:
+            Normalized results with consistent format
+        """
+        normalized_results = []
+        
+        # Handle different result formats
+        if 'ids' in results and 'documents' in results and 'metadatas' in results:
+            # Standard ChromaDB format
+            for i, (doc_id, document, metadata) in enumerate(zip(
+                results.get('ids', []),
+                results.get('documents', []),
+                results.get('metadatas', [])
+            )):
+                # Extract clean content and display content
+                clean_content = metadata.get('original_text', document)
+                display_content = document
+                
+                # Check if this is an enhanced chunk
+                has_contextual_header = metadata.get('has_contextual_header', False)
+                contextual_header = metadata.get('contextual_header', '')
+                
+                normalized_result = {
+                    'id': doc_id,
+                    'content': display_content,
+                    'clean_content': clean_content,
+                    'metadata': metadata,
+                    'has_contextual_header': has_contextual_header,
+                    'contextual_header': contextual_header,
+                    'display_title': contextual_header or self._generate_display_title_from_metadata(metadata),
+                    'chunk_format': 'enhanced' if has_contextual_header else 'legacy',
+                    'distance': results.get('distances', [0.0])[i] if i < len(results.get('distances', [])) else 0.0
+                }
+                
+                normalized_results.append(normalized_result)
+        
+        return {
+            'normalized_results': normalized_results,
+            'original_results': results
+        }
+    
+    def _generate_display_title_from_metadata(self, metadata: Dict[str, Any]) -> str:
+        """
+        Generate display title from metadata
+        
+        Args:
+            metadata: Chunk metadata
+            
+        Returns:
+            Generated display title
+        """
+        title_parts = []
+        
+        # Add filename if available
+        filename = metadata.get('filename') or metadata.get('source')
+        if filename:
+            title_parts.append(f"File: {filename}")
+        
+        # Add page number if available
+        page_num = metadata.get('page_number') or metadata.get('page')
+        if page_num:
+            title_parts.append(f"Page: {page_num}")
+        
+        # Add section if available
+        section = metadata.get('section')
+        if section:
+            title_parts.append(f"Section: {section}")
+        
+        # Add chunk index as fallback
+        if not title_parts:
+            title_parts.append("Document Chunk")
+        
+        return " > ".join(title_parts)
+    
     def extract_clean_content(self, chunk: Union[Chunk, EnhancedChunk]) -> str:
         """
         Extract clean content without contextual headers for processing

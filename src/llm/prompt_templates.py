@@ -249,6 +249,94 @@ Conclusion:
 ..."""
     )
     
+    # Template spécialisé pour les requêtes professeur
+    PROFESSOR_QUERY = PromptTemplate(
+        system="""Tu es un assistant éducatif spécialisé dans l'extraction d'informations sur les professeurs et enseignants.
+
+⚠️ RÈGLES SPÉCIALES POUR LES REQUÊTES PROFESSEUR:
+
+1. PRIORITÉ PREMIÈRE PAGE:
+   - Examine ATTENTIVEMENT le contenu de la première page de chaque document
+   - Les noms de professeurs apparaissent généralement en début de document
+   - Cherche les titres comme "Prof.", "Dr.", "Professeur", "M.", "Mme."
+
+2. PATTERNS DE RECHERCHE:
+   - Noms après "Professeur:", "Enseignant:", "Responsable:"
+   - Noms avec titres académiques (Prof. Dupont, Dr. Martin)
+   - Noms en en-tête ou signature de document
+   - Informations de contact avec noms
+
+3. EXTRACTION PRÉCISE:
+   - Cite EXACTEMENT le nom tel qu'il apparaît dans le document
+   - Indique la source et la page si possible
+   - Si plusieurs noms, liste-les tous
+
+4. SI AUCUN NOM TROUVÉ:
+   - Dis clairement "Le nom du professeur n'est pas mentionné dans les documents disponibles"
+   - Ne devine JAMAIS un nom
+   - Suggère de vérifier la première page du document original
+
+✅ OBJECTIF: Trouver et citer précisément le nom du professeur/enseignant responsable du cours.""",
+        
+        user="""CONTEXTE (avec priorité première page):
+{context}
+
+QUESTION: {question}
+
+INSTRUCTIONS SPÉCIALES:
+- Examine d'abord tout contenu marqué comme "première page" ou "page 1"
+- Cherche spécifiquement les noms de professeurs/enseignants
+- Cite le nom exact tel qu'il apparaît
+- Indique la source du document
+
+RÉPONSE DIRECTE:"""
+    )
+    
+    # Template spécialisé pour les informations de contact du professeur
+    PROFESSOR_CONTACT = PromptTemplate(
+        system="""Tu es un assistant éducatif spécialisé dans l'extraction d'informations de contact des professeurs et enseignants.
+
+⚠️ RÈGLES SPÉCIALES POUR LES REQUÊTES DE CONTACT:
+
+1. PRIORITÉ PREMIÈRE PAGE:
+   - Examine ATTENTIVEMENT le contenu de la première page de chaque document
+   - Les informations de contact apparaissent généralement en début de document
+   - Cherche les emails, téléphones, bureaux, adresses
+
+2. PATTERNS DE RECHERCHE:
+   - Adresses email (format: nom@domaine.extension)
+   - Numéros de téléphone
+   - Numéros de bureau ou d'office
+   - Adresses postales
+   - Informations de contact après le nom du professeur
+
+3. EXTRACTION PRÉCISE:
+   - Cite EXACTEMENT l'information de contact telle qu'elle apparaît
+   - Indique le type de contact (email, téléphone, bureau, etc.)
+   - Associe l'information au bon professeur si plusieurs sont mentionnés
+
+4. SI AUCUNE INFO TROUVÉE:
+   - Dis clairement "Les informations de contact ne sont pas mentionnées dans les documents disponibles"
+   - Ne devine JAMAIS une adresse email ou un numéro
+   - Suggère de vérifier la première page du document original
+
+✅ OBJECTIF: Trouver et citer précisément les informations de contact du professeur/enseignant.""",
+        
+        user="""CONTEXTE (avec priorité première page):
+{context}
+
+QUESTION: {question}
+
+INSTRUCTIONS SPÉCIALES:
+- Examine d'abord tout contenu marqué comme "première page" ou "page 1"
+- Cherche spécifiquement les informations de contact (email, téléphone, bureau)
+- Cite l'information exacte telle qu'elle apparaît
+- Associe l'information au professeur concerné
+- Indique la source du document
+
+RÉPONSE DIRECTE:"""
+    )
+    
     # Template pour génération d'exercices
     EXERCISE_GENERATION = PromptTemplate(
         system="""Tu es un enseignant qui crée des exercices pratiques basés sur le contenu du cours.""",
@@ -289,6 +377,166 @@ class PromptBuilder:
     
     def __init__(self):
         self.templates = PromptTemplates()
+    
+    def build_professor_prompt(
+        self,
+        question: str,
+        context_chunks: List[Dict],
+        max_context_length: int = 2000
+    ) -> tuple[str, str]:
+        """
+        Construit un prompt spécialisé pour les requêtes professeur
+        
+        Args:
+            question: Question sur le professeur
+            context_chunks: Liste de chunks pertinents (avec priorité première page)
+            max_context_length: Longueur max du contexte
+            
+        Returns:
+            (system_prompt, user_prompt)
+        """
+        # Construction du contexte avec priorité première page
+        context_parts = []
+        current_length = 0
+        
+        # Séparer les chunks de première page des autres
+        first_page_chunks = []
+        other_chunks = []
+        
+        for chunk in context_chunks:
+            metadata = chunk.get('metadata', {})
+            if metadata.get('page_number') == 1 or metadata.get('is_first_page'):
+                first_page_chunks.append(chunk)
+            else:
+                other_chunks.append(chunk)
+        
+        # Traiter d'abord les chunks de première page
+        for i, chunk in enumerate(first_page_chunks, 1):
+            chunk_metadata = chunk.get('metadata', {})
+            chunk_text = (
+                chunk.get('clean_content')
+                or chunk_metadata.get('clean_content')
+                or chunk.get('text', '')
+            )
+            
+            source = chunk_metadata.get('filename', 'Document inconnu')
+            page_info = " [PREMIÈRE PAGE]"
+            
+            chunk_formatted = f"\n[Document {i}: {source}{page_info}]\n{chunk_text}\n"
+            
+            if current_length + len(chunk_formatted) <= max_context_length:
+                context_parts.append(chunk_formatted)
+                current_length += len(chunk_formatted)
+        
+        # Ajouter les autres chunks si il reste de la place
+        for i, chunk in enumerate(other_chunks, len(first_page_chunks) + 1):
+            if current_length >= max_context_length:
+                break
+                
+            chunk_metadata = chunk.get('metadata', {})
+            chunk_text = (
+                chunk.get('clean_content')
+                or chunk_metadata.get('clean_content')
+                or chunk.get('text', '')
+            )
+            
+            source = chunk_metadata.get('filename', 'Document inconnu')
+            page = chunk_metadata.get('page_number', '')
+            page_info = f", page {page}" if page else ""
+            
+            chunk_formatted = f"\n[Document {i}: {source}{page_info}]\n{chunk_text}\n"
+            
+            if current_length + len(chunk_formatted) <= max_context_length:
+                context_parts.append(chunk_formatted)
+                current_length += len(chunk_formatted)
+        
+        context = "\n---\n".join(context_parts)
+        
+        # Formater le template spécialisé
+        return self.templates.PROFESSOR_QUERY.format(
+            context=context,
+            question=question
+        )
+    
+    def build_professor_contact_prompt(
+        self,
+        question: str,
+        context_chunks: List[Dict],
+        max_context_length: int = 2000
+    ) -> tuple[str, str]:
+        """
+        Construit un prompt spécialisé pour les requêtes de contact professeur
+        
+        Args:
+            question: Question sur le contact du professeur
+            context_chunks: Liste de chunks pertinents (avec priorité première page)
+            max_context_length: Longueur max du contexte
+            
+        Returns:
+            (system_prompt, user_prompt)
+        """
+        # Construction du contexte avec priorité première page (même logique que build_professor_prompt)
+        context_parts = []
+        current_length = 0
+        
+        # Séparer les chunks de première page des autres
+        first_page_chunks = []
+        other_chunks = []
+        
+        for chunk in context_chunks:
+            metadata = chunk.get('metadata', {})
+            if metadata.get('page_number') == 1 or metadata.get('is_first_page'):
+                first_page_chunks.append(chunk)
+            else:
+                other_chunks.append(chunk)
+        
+        # Traiter d'abord les chunks de première page
+        for i, chunk in enumerate(first_page_chunks, 1):
+            chunk_metadata = chunk.get('metadata', {})
+            chunk_text = (
+                chunk.get('clean_content')
+                or chunk_metadata.get('clean_content')
+                or chunk.get('text', '')
+            )
+            
+            source = chunk_metadata.get('filename', 'Document inconnu')
+            page_info = " [PREMIÈRE PAGE]"
+            
+            chunk_formatted = f"\n[Document {i}: {source}{page_info}]\n{chunk_text}\n"
+            
+            if current_length + len(chunk_formatted) <= max_context_length:
+                context_parts.append(chunk_formatted)
+                current_length += len(chunk_formatted)
+        
+        # Ajouter les autres chunks si il reste de la place
+        for i, chunk in enumerate(other_chunks, len(first_page_chunks) + 1):
+            if current_length >= max_context_length:
+                break
+                
+            chunk_metadata = chunk.get('metadata', {})
+            chunk_text = (
+                chunk.get('clean_content')
+                or chunk_metadata.get('clean_content')
+                or chunk.get('text', '')
+            )
+            
+            source = chunk_metadata.get('filename', 'Document inconnu')
+            page = chunk_metadata.get('page_number', '')
+            page_info = f", page {page}" if page else ""
+            
+            chunk_formatted = f"\n[Document {i}: {source}{page_info}]\n{chunk_text}\n"
+            
+            if current_length + len(chunk_formatted) <= max_context_length:
+                context_parts.append(chunk_formatted)
+                current_length += len(chunk_formatted)
+        
+        context = "\n---\n".join(context_parts)
+        
+        # Formater le template spécialisé pour le contact
+        return self.templates.PROFESSOR_CONTACT.format(
+            context=context,
+            question=question
+        )
     
     def build_rag_prompt(
         self,
