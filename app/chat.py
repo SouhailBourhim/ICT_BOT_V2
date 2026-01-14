@@ -148,11 +148,12 @@ def initialize_system():
         )
 
         # Charger l'index BM25 si disponible
-        hybrid_search.load_bm25_index(str(settings.BM25_INDEX_PATH))
+        bm25_loaded = hybrid_search.load_bm25_index(str(settings.BM25_INDEX_PATH))
         
         # Indexer tous les documents pour BM25
         doc_count = vector_store.count()
-        if doc_count > 0:
+        index_matches = len(hybrid_search.bm25_documents) == doc_count
+        if doc_count > 0 and (not bm25_loaded or not index_matches):
             logger.info(f"Indexation BM25 de {doc_count} documents...")
             all_docs = vector_store.peek(limit=doc_count)
             if all_docs and all_docs.get('documents'):
@@ -284,6 +285,13 @@ def render_sidebar(system):
                 step=1
             )
             st.session_state.top_k = top_k
+
+        if system.get('metrics_collector'):
+            metrics_summary = system['metrics_collector'].get_summary()
+            with st.expander("📈 Métriques", expanded=False):
+                st.metric("Opérations", metrics_summary.get("total_operations", 0))
+                st.metric("Latence moyenne (s)", f"{metrics_summary.get('avg_latency', 0):.2f}")
+                st.metric("Latence max (s)", f"{metrics_summary.get('max_latency', 0):.2f}")
 
 
 def render_main_chat(system):
@@ -475,7 +483,6 @@ def render_enhanced_sources_inline(sources):
         # Extract display information
         display_title = get_source_display_title(source)
         content = get_source_display_content(source)
-        score = source.get('score', 0.0)
         chunk_format = source.get('chunk_format', 'unknown')
         
         # Format indicator
@@ -497,7 +504,7 @@ def render_enhanced_sources_inline(sources):
         st.markdown(f"""
         <div class="source-card">
             <strong>[{i}] {format_indicator}</strong> {display_title}<br>
-            <small>Score: {score:.2f}</small>{contextual_info}
+            {contextual_info}
         </div>
         """, unsafe_allow_html=True)
         
@@ -519,14 +526,12 @@ def render_legacy_sources(sources):
             # Dictionary format
             name = source.get('name', source.get('filename', f'Document {i}'))
             pages = source.get('pages', [])
-            score = source.get('score', 0.0)
-            
             pages_text = f"pages {', '.join(map(str, pages))}" if pages else "page inconnue"
             
             st.markdown(f"""
             <div class="source-card">
                 <strong>[{i}]</strong> {name}<br>
-                <small>📄 {pages_text} • Score: {score:.2f}</small>
+                <small>📄 {pages_text}</small>
             </div>
             """, unsafe_allow_html=True)
         else:

@@ -66,6 +66,8 @@ class Settings(BaseSettings):
     # Query Enhancement
     ENABLE_SPELLING_CORRECTION: bool = True
     ENABLE_QUERY_EXPANSION: bool = True
+    QUERY_ENHANCEMENT_MAX_WORDS: int = 10
+    QUERY_ENHANCEMENT_MIN_CHARS: int = 12
     
     # Analytics
     ENABLE_TRACKING: bool = True

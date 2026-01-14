@@ -159,7 +159,14 @@ class ResponseGenerator:
 
         # 0. Query enhancement (optional)
         search_query = question
-        if settings.ENABLE_QUERY_EXPANSION or settings.ENABLE_SPELLING_CORRECTION:
+        word_count = len(question.split())
+        if (
+            settings.ENABLE_QUERY_EXPANSION
+            or settings.ENABLE_SPELLING_CORRECTION
+        ) and (
+            word_count <= settings.QUERY_ENHANCEMENT_MAX_WORDS
+            or len(question) <= settings.QUERY_ENHANCEMENT_MIN_CHARS
+        ):
             enhancer = QueryEnhancer(ollama_client=self.ollama_client)
             enhanced_query = enhancer.enhance(question)
             if enhanced_query:
@@ -226,7 +233,9 @@ class ResponseGenerator:
         sources = self._extract_sources(relevant_chunks[:self.max_sources])
         
         # 7. Calcul de confiance
-        confidence = self._calculate_confidence(search_results, answer)
+        confidence, confidence_breakdown = self._calculate_confidence(
+            search_results, answer, question, relevant_chunks
+        )
         
         # 8. Construction de la réponse finale
         return RAGResponse(
@@ -240,7 +249,8 @@ class ResponseGenerator:
                 'question': question,
                 'search_query': search_query,
                 'has_conversation_history': conversation_history is not None,
-                'used_conversation_history': use_history
+                'used_conversation_history': use_history,
+                'confidence_breakdown': confidence_breakdown
             }
         )
     
@@ -320,24 +330,40 @@ class ResponseGenerator:
         
         return sources_list
     
-    def _calculate_confidence(self, search_results: List, answer: str) -> float:
+    def _calculate_confidence(
+        self,
+        search_results: List,
+        answer: str,
+        question: str,
+        relevant_chunks: List[Dict]
+    ) -> tuple[float, Dict[str, float]]:
         """
         Calcule un score de confiance global
-        Basé sur: scores de recherche, longueur réponse, présence de citations
+        Basé sur: scores de recherche, couverture des mots-clés, longueur réponse
         """
         if not search_results:
-            return 0.0
-        
-        # Score moyen de recherche
-        avg_search_score = sum(r.score for r in search_results[:5]) / min(5, len(search_results))
-        
-        # Pénalité si réponse courte
-        length_score = min(len(answer) / 200, 1.0)
-        
-        # Bonus si citations présentes
-        has_citations = bool(re.search(r'\[Source:', answer))
-        citation_bonus = 0.1 if has_citations else 0.0
-        
+            return 0.0, {"retrieval_strength": 0.0, "coverage": 0.0, "length_score": 0.0}
+
+        normalized_semantic = self._normalize_component_scores(
+            [r.semantic_score or r.score for r in search_results]
+        )
+        normalized_bm25 = self._normalize_component_scores(
+            [r.bm25_score for r in search_results]
+        )
+
+        combined_scores = []
+        for semantic_score, bm25_score in zip(normalized_semantic, normalized_bm25):
+            if bm25_score > 0:
+                combined = (semantic_score + bm25_score) / 2
+            else:
+                combined = semantic_score
+            combined_scores.append(combined)
+
+        top_k = min(5, len(combined_scores))
+        retrieval_strength = sum(combined_scores[:top_k]) / top_k if top_k else 0.0
+        coverage = self._compute_query_coverage(question, relevant_chunks)
+        length_score = min(len(answer) / 300, 1.0)
+
         # Pénalité si "je ne sais pas" dans la réponse
         uncertainty_penalty = 0.2 if any(phrase in answer.lower() for phrase in [
             "je ne sais pas",
@@ -345,10 +371,46 @@ class ResponseGenerator:
             "informations insuffisantes",
             "pas dans les documents"
         ]) else 0.0
-        
-        confidence = (avg_search_score * 0.6 + length_score * 0.3 + citation_bonus - uncertainty_penalty)
-        
-        return max(0.0, min(1.0, confidence))
+
+        confidence = (
+            retrieval_strength * 0.5
+            + coverage * 0.3
+            + length_score * 0.2
+            - uncertainty_penalty
+        )
+
+        return max(0.0, min(1.0, confidence)), {
+            "retrieval_strength": retrieval_strength,
+            "coverage": coverage,
+            "length_score": length_score,
+            "uncertainty_penalty": uncertainty_penalty
+        }
+
+    def _normalize_component_scores(self, scores: List[float]) -> List[float]:
+        """Normalize scores between 0 and 1."""
+        if not scores:
+            return []
+        min_score = min(scores)
+        max_score = max(scores)
+        if max_score - min_score <= 0:
+            return [0.0 for _ in scores]
+        return [(score - min_score) / (max_score - min_score) for score in scores]
+
+    def _compute_query_coverage(self, question: str, chunks: List[Dict]) -> float:
+        """Compute how many query keywords appear in retrieved chunks."""
+        keywords = [w for w in re.findall(r"\w+", question.lower()) if len(w) > 3]
+        if not keywords:
+            return 0.0
+        corpus_text = " ".join(
+            chunk.get('clean_content')
+            or chunk.get('metadata', {}).get('clean_content')
+            or chunk.get('text', '')
+            for chunk in chunks
+        ).lower()
+        if not corpus_text:
+            return 0.0
+        matched = sum(1 for word in set(keywords) if word in corpus_text)
+        return matched / len(set(keywords))
     
     def _post_process_answer(self, answer: str) -> str:
         """Post-traitement de la réponse"""
