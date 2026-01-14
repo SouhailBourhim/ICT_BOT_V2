@@ -284,6 +284,40 @@ class VectorStore:
             logger.error(f"Erreur lors de la récupération: {e}")
             raise
     
+    def get_all_with_metadata(self) -> Dict:
+        """
+        Retrieve all documents with metadata from the collection
+        
+        Returns:
+            Dictionary with all documents and their metadata
+        """
+        try:
+            # Get all documents from the collection
+            results = self.collection.get()
+            
+            # Use compatibility layer to normalize results
+            normalized_results = compatibility_layer.normalize_search_results(results)
+            
+            return normalized_results
+            
+        except Exception as e:
+            logger.error(f"Error retrieving all documents: {e}")
+            raise
+    
+    def get_all(self) -> Dict:
+        """
+        Retrieve all documents (legacy method for backward compatibility)
+        
+        Returns:
+            Dictionary with all documents
+        """
+        try:
+            results = self.collection.get()
+            return results
+        except Exception as e:
+            logger.error(f"Error retrieving all documents: {e}")
+            raise
+    
     def add_enhanced_chunks(
         self,
         chunks: List[Union[Chunk, EnhancedChunk]],

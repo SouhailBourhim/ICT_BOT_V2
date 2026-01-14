@@ -1,0 +1,15 @@
+{
+  "id": "6c3e5643-f9df-48f7-8b41-0938859b9a3d",
+  "title": "donne moi son mail",
+  "messages": [
+    {
+      "role": "user",
+      "content": "donne moi son mail",
+      "timestamp": "2026-01-14T14:20:07.949342",
+      "metadata": {}
+    }
+  ],
+  "created_at": "2026-01-14T14:20:07.947473",
+  "updated_at": "2026-01-14T14:20:07.949352",
+  "metadata": {}
+}

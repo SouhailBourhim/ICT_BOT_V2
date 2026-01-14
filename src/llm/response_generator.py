@@ -8,6 +8,7 @@ from loguru import logger
 
 from ..config.settings import settings
 from ..utils.query_enhancement import QueryEnhancer
+from ..retrieval.professor_query_handler import ProfessorQueryHandler
 
 
 @dataclass
@@ -52,6 +53,12 @@ class ResponseGenerator:
         self.min_confidence = min_confidence
         self.max_sources = max_sources
         self.top_k_retrieval = top_k_retrieval
+        
+        # Initialize professor query handler
+        self.professor_handler = ProfessorQueryHandler(
+            vector_store=hybrid_search.vector_store,
+            hybrid_search=hybrid_search
+        )
         
         logger.info("ResponseGenerator initialisé")
     
@@ -179,12 +186,33 @@ class ResponseGenerator:
             if not use_history:
                 logger.info("🆕 Question indépendante détectée - historique ignoré")
         
-        # 2. Recherche hybride
-        search_results = self.hybrid_search.search(
-            query=search_query,
-            top_k=self.top_k_retrieval,
-            filters=filters
-        )
+        # 2. Recherche hybride avec gestion spécialisée pour les requêtes professeur
+        if self.professor_handler.is_professor_query(question):
+            logger.info("🎓 Requête professeur détectée - utilisation du handler spécialisé")
+            search_results_raw = self.professor_handler.handle_professor_query(
+                query=search_query,
+                top_k=self.top_k_retrieval,
+                filters=filters
+            )
+            # Convert to SearchResult objects for compatibility
+            from ..retrieval.hybrid_search import SearchResult
+            search_results = []
+            for result in search_results_raw:
+                search_results.append(SearchResult(
+                    doc_id=result['doc_id'],
+                    text=result['text'],
+                    metadata=result['metadata'],
+                    score=result['score'],
+                    semantic_score=result.get('semantic_score', result['score']),
+                    bm25_score=result.get('bm25_score', 0.0),
+                    rank=result['rank']
+                ))
+        else:
+            search_results = self.hybrid_search.search(
+                query=search_query,
+                top_k=self.top_k_retrieval,
+                filters=filters
+            )
         
         if not search_results:
             return self._generate_no_context_response(question)
@@ -196,7 +224,21 @@ class ResponseGenerator:
             return self._generate_low_confidence_response(question, search_results)
         
         # 4. Construction du prompt (avec ou sans historique selon détection)
-        if use_history:
+        if self.professor_handler.is_professor_query(question):
+            # Check if it's specifically asking for contact information
+            if self.professor_handler.is_professor_contact_query(question):
+                # Utiliser le prompt spécialisé pour les informations de contact
+                system_prompt, user_prompt = self.prompt_builder.build_professor_contact_prompt(
+                    question=question,
+                    context_chunks=relevant_chunks
+                )
+            else:
+                # Utiliser le prompt spécialisé pour les requêtes professeur générales
+                system_prompt, user_prompt = self.prompt_builder.build_professor_prompt(
+                    question=question,
+                    context_chunks=relevant_chunks
+                )
+        elif use_history:
             system_prompt, user_prompt = self.prompt_builder.build_conversation_prompt(
                 question=question,
                 context_chunks=relevant_chunks,

@@ -1,0 +1,18 @@
+{
+  "id": "61ac3392-81b4-4366-ba4e-cfb26a132d39",
+  "title": "Conversation 14/01/2026 14:20",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "Source non disponible.",
+      "timestamp": "2026-01-14T14:20:07.950513",
+      "metadata": {
+        "confidence": 0.11806420353050365,
+        "num_sources": 3
+      }
+    }
+  ],
+  "created_at": "2026-01-14T14:20:07.950103",
+  "updated_at": "2026-01-14T14:20:07.950522",
+  "metadata": {}
+}
