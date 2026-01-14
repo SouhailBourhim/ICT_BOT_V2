@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     BM25_INDEX_PATH: Path = DATABASE_DIR / "bm25_index.pkl"
     
     # LLM Configuration
-    LLM_PROVIDER: str = "gemini"  # Primary LLM provider: ollama, gemini
+    LLM_PROVIDER: str = "ollama"  # Primary LLM provider: ollama, gemini
     LLM_FALLBACK_PROVIDER: str = "ollama"  # Fallback provider if primary fails
     
     # Ollama LLM

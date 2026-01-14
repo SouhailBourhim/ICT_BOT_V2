@@ -186,6 +186,12 @@ class ResponseGenerator:
             if not use_history:
                 logger.info("🆕 Question indépendante détectée - historique ignoré")
         
+        # 2. Recherche hybride
+        search_results = self.hybrid_search.search(
+            query=search_query,
+            top_k=self.top_k_retrieval,
+            filters=filters
+        )
         # 2. Recherche hybride avec gestion spécialisée pour les requêtes professeur
         if self.professor_handler.is_professor_query(question):
             logger.info("🎓 Requête professeur détectée - utilisation du handler spécialisé")
