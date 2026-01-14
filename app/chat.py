@@ -19,8 +19,11 @@ from src.llm.prompt_templates import PromptBuilder
 from src.llm.response_generator import ResponseGenerator
 from src.conversation.manager import ConversationManager
 from app.components.math_renderer import render_math_content
+from src.analytics.metrics import MetricsCollector
+from src.analytics.tracker import InteractionTracker
 
 from datetime import datetime
+import time
 from loguru import logger
 import re
 
@@ -143,6 +146,9 @@ def initialize_system():
             semantic_weight=settings.SEMANTIC_WEIGHT,
             bm25_weight=settings.BM25_WEIGHT
         )
+
+        # Charger l'index BM25 si disponible
+        hybrid_search.load_bm25_index(str(settings.BM25_INDEX_PATH))
         
         # Indexer tous les documents pour BM25
         doc_count = vector_store.count()
@@ -190,6 +196,9 @@ def initialize_system():
             storage_dir="./data/conversations",
             max_history_length=settings.MAX_CONVERSATION_HISTORY
         )
+
+        metrics_collector = MetricsCollector() if settings.ENABLE_METRICS else None
+        interaction_tracker = InteractionTracker() if settings.ENABLE_TRACKING else None
         
         logger.success("✅ Système initialisé avec succès")
         
@@ -199,7 +208,9 @@ def initialize_system():
             'hybrid_search': hybrid_search,
             'ollama': ollama,
             'response_gen': response_gen,
-            'conv_manager': conv_manager
+            'conv_manager': conv_manager,
+            'metrics_collector': metrics_collector,
+            'interaction_tracker': interaction_tracker
         }
         
     except Exception as e:
@@ -324,6 +335,7 @@ def render_main_chat(system):
         # Générer la réponse
         with st.chat_message("assistant"):
             with st.spinner("🤔 Recherche et génération de la réponse..."):
+                start_time = time.time()
                 # Récupérer l'historique
                 history = system['conv_manager'].get_context_window(
                     conversation_id=st.session_state.current_conv_id
@@ -335,6 +347,7 @@ def render_main_chat(system):
                     conversation_history=history,
                     temperature=st.session_state.get('temperature', 0.7)
                 )
+                duration = time.time() - start_time
                 
                 # Afficher la réponse
                 render_math_content(response.answer)
@@ -367,6 +380,21 @@ def render_main_chat(system):
                     "sources": response.sources,
                     "confidence": response.confidence
                 })
+
+                if system.get('metrics_collector'):
+                    system['metrics_collector'].record_latency("generate_response", duration)
+                    system['metrics_collector'].record_retrieval_quality(
+                        query=prompt,
+                        num_results=len(response.retrieved_chunks),
+                        avg_score=response.confidence
+                    )
+
+                if system.get('interaction_tracker'):
+                    system['interaction_tracker'].track_query(
+                        query=prompt,
+                        response=response.answer,
+                        retrieved_docs=len(response.retrieved_chunks)
+                    )
 
 
 def render_sources(sources, confidence):

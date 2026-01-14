@@ -303,8 +303,12 @@ class PromptBuilder:
         current_length = 0
         
         for i, chunk in enumerate(context_chunks, 1):
-            chunk_text = chunk.get('text', '')
             chunk_metadata = chunk.get('metadata', {})
+            chunk_text = (
+                chunk.get('clean_content')
+                or chunk_metadata.get('clean_content')
+                or chunk.get('text', '')
+            )
             
             # Formatage du chunk avec métadonnées
             source = chunk_metadata.get('filename', 'Document inconnu')
@@ -368,7 +372,11 @@ class PromptBuilder:
         current_length = 0
         
         for chunk in chunks:
-            text = chunk.get('text', '')
+            text = (
+                chunk.get('clean_content')
+                or chunk.get('metadata', {}).get('clean_content')
+                or chunk.get('text', '')
+            )
             if current_length + len(text) > max_length:
                 break
             context_parts.append(text)

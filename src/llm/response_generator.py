@@ -6,6 +6,9 @@ from dataclasses import dataclass
 import re
 from loguru import logger
 
+from ..config.settings import settings
+from ..utils.query_enhancement import QueryEnhancer
+
 
 @dataclass
 class RAGResponse:
@@ -153,6 +156,14 @@ class ResponseGenerator:
             RAGResponse avec réponse et métadonnées
         """
         logger.info(f"🎯 Génération de réponse pour: '{question[:50]}...'")
+
+        # 0. Query enhancement (optional)
+        search_query = question
+        if settings.ENABLE_QUERY_EXPANSION or settings.ENABLE_SPELLING_CORRECTION:
+            enhancer = QueryEnhancer(ollama_client=self.ollama_client)
+            enhanced_query = enhancer.enhance(question)
+            if enhanced_query:
+                search_query = enhanced_query
         
         # 1. Détection intelligente de question de suivi
         use_history = False
@@ -163,7 +174,7 @@ class ResponseGenerator:
         
         # 2. Recherche hybride
         search_results = self.hybrid_search.search(
-            query=question,
+            query=search_query,
             top_k=self.top_k_retrieval,
             filters=filters
         )
@@ -227,6 +238,7 @@ class ResponseGenerator:
                 'num_chunks_retrieved': len(search_results),
                 'num_chunks_used': len(relevant_chunks),
                 'question': question,
+                'search_query': search_query,
                 'has_conversation_history': conversation_history is not None,
                 'used_conversation_history': use_history
             }
@@ -258,8 +270,15 @@ class ResponseGenerator:
         
         for result in results:
             if result.score >= self.min_confidence:
+                clean_content = ""
+                if isinstance(result.metadata, dict):
+                    clean_content = result.metadata.get('clean_content', '')
+                display_text = result.text
+                chunk_text = clean_content or display_text
                 filtered.append({
-                    'text': result.text,
+                    'text': chunk_text,
+                    'clean_content': clean_content,
+                    'raw_text': display_text,
                     'metadata': result.metadata,
                     'score': result.score
                 })

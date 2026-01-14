@@ -272,6 +272,7 @@ class DocumentIngestion:
             # Indexation
             self.hybrid_search.index_documents(documents)
             logger.success(f"✅ {len(documents)} documents indexés pour BM25")
+            self.hybrid_search.save_bm25_index(str(settings.BM25_INDEX_PATH))
             
         except Exception as e:
             logger.error(f"Erreur indexation BM25: {e}")

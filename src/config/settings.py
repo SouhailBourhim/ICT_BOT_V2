@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     BM25_WEIGHT: float = 0.3
     SEMANTIC_WEIGHT: float = 0.7
     RERANK_TOP_K: int = 3  # Réduit de 5 à 3 pour réponses plus focalisées
+    BM25_INDEX_PATH: Path = DATABASE_DIR / "bm25_index.pkl"
     
     # Ollama LLM
     OLLAMA_BASE_URL: str = "http://localhost:11434"
