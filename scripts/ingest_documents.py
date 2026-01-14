@@ -272,6 +272,7 @@ class DocumentIngestion:
             # Indexation
             self.hybrid_search.index_documents(documents)
             logger.success(f"✅ {len(documents)} documents indexés pour BM25")
+            self.hybrid_search.save_bm25_index(str(settings.BM25_INDEX_PATH))
             
         except Exception as e:
             logger.error(f"Erreur indexation BM25: {e}")
@@ -373,6 +374,12 @@ def main():
         action='store_true',
         help='Afficher les statistiques uniquement'
     )
+
+    parser.add_argument(
+        '--bm25-only',
+        action='store_true',
+        help='Reconstruire uniquement l’index BM25'
+    )
     
     args = parser.parse_args()
     
@@ -389,6 +396,10 @@ def main():
     # Migration if requested
     if args.migrate:
         ingestion.migrate_existing_chunks()
+        return
+
+    if args.bm25_only:
+        ingestion._index_bm25()
         return
     
     # Stats uniquement

@@ -52,7 +52,12 @@ class PromptTemplates:
    - Exemple: [ \\text{{MSE}} = \\frac{{1}}{{n}} \\sum_{{i=1}}^{{n}} (Y_i - \\hat{{Y}}_i)^2 ]
    - Ne JAMAIS écrire en texte brut
 
-6. LONGUEUR:
+6. CITATIONS OBLIGATOIRES:
+   - Chaque affirmation doit être appuyée par une citation du contexte
+   - Format: [Source: Nom du document, page X si disponible]
+   - Si la source n'est pas identifiable → dis "Source non disponible"
+
+7. LONGUEUR:
    - Réponses concises: 3-5 phrases maximum
    - Va droit au but
    - Pas de bavardage
@@ -102,9 +107,13 @@ RÉPONSE DIRECTE:"""
    - Si l'historique mentionne un exemple non documenté → corrige-le
    - Dis clairement: "Les documents ne mentionnent pas d'exemples spécifiques"
 
-4. CLARTÉ:
+4. CITATIONS OBLIGATOIRES:
+   - Chaque affirmation doit être appuyée par une citation du contexte
+   - Format: [Source: Nom du document, page X si disponible]
+   - Si la source n'est pas identifiable → dis "Source non disponible"
+
+5. CLARTÉ:
    - Réponses concises et directes
-   - Cite les sources documentaires
    - Sois pédagogique mais factuel
 
 🚫 INTERDIT même dans une conversation:
@@ -303,8 +312,12 @@ class PromptBuilder:
         current_length = 0
         
         for i, chunk in enumerate(context_chunks, 1):
-            chunk_text = chunk.get('text', '')
             chunk_metadata = chunk.get('metadata', {})
+            chunk_text = (
+                chunk.get('clean_content')
+                or chunk_metadata.get('clean_content')
+                or chunk.get('text', '')
+            )
             
             # Formatage du chunk avec métadonnées
             source = chunk_metadata.get('filename', 'Document inconnu')
@@ -368,7 +381,11 @@ class PromptBuilder:
         current_length = 0
         
         for chunk in chunks:
-            text = chunk.get('text', '')
+            text = (
+                chunk.get('clean_content')
+                or chunk.get('metadata', {}).get('clean_content')
+                or chunk.get('text', '')
+            )
             if current_length + len(text) > max_length:
                 break
             context_parts.append(text)

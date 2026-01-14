@@ -19,8 +19,11 @@ from src.llm.prompt_templates import PromptBuilder
 from src.llm.response_generator import ResponseGenerator
 from src.conversation.manager import ConversationManager
 from app.components.math_renderer import render_math_content
+from src.analytics.metrics import MetricsCollector
+from src.analytics.tracker import InteractionTracker
 
 from datetime import datetime
+import time
 from loguru import logger
 import re
 
@@ -143,10 +146,14 @@ def initialize_system():
             semantic_weight=settings.SEMANTIC_WEIGHT,
             bm25_weight=settings.BM25_WEIGHT
         )
+
+        # Charger l'index BM25 si disponible
+        bm25_loaded = hybrid_search.load_bm25_index(str(settings.BM25_INDEX_PATH))
         
         # Indexer tous les documents pour BM25
         doc_count = vector_store.count()
-        if doc_count > 0:
+        index_matches = len(hybrid_search.bm25_documents) == doc_count
+        if doc_count > 0 and (not bm25_loaded or not index_matches):
             logger.info(f"Indexation BM25 de {doc_count} documents...")
             all_docs = vector_store.peek(limit=doc_count)
             if all_docs and all_docs.get('documents'):
@@ -190,6 +197,9 @@ def initialize_system():
             storage_dir="./data/conversations",
             max_history_length=settings.MAX_CONVERSATION_HISTORY
         )
+
+        metrics_collector = MetricsCollector() if settings.ENABLE_METRICS else None
+        interaction_tracker = InteractionTracker() if settings.ENABLE_TRACKING else None
         
         logger.success("✅ Système initialisé avec succès")
         
@@ -199,7 +209,9 @@ def initialize_system():
             'hybrid_search': hybrid_search,
             'ollama': ollama,
             'response_gen': response_gen,
-            'conv_manager': conv_manager
+            'conv_manager': conv_manager,
+            'metrics_collector': metrics_collector,
+            'interaction_tracker': interaction_tracker
         }
         
     except Exception as e:
@@ -274,6 +286,13 @@ def render_sidebar(system):
             )
             st.session_state.top_k = top_k
 
+        if system.get('metrics_collector'):
+            metrics_summary = system['metrics_collector'].get_summary()
+            with st.expander("📈 Métriques", expanded=False):
+                st.metric("Opérations", metrics_summary.get("total_operations", 0))
+                st.metric("Latence moyenne (s)", f"{metrics_summary.get('avg_latency', 0):.2f}")
+                st.metric("Latence max (s)", f"{metrics_summary.get('max_latency', 0):.2f}")
+
 
 def render_main_chat(system):
     """Rendu de l'interface de chat principale"""
@@ -324,6 +343,7 @@ def render_main_chat(system):
         # Générer la réponse
         with st.chat_message("assistant"):
             with st.spinner("🤔 Recherche et génération de la réponse..."):
+                start_time = time.time()
                 # Récupérer l'historique
                 history = system['conv_manager'].get_context_window(
                     conversation_id=st.session_state.current_conv_id
@@ -335,6 +355,7 @@ def render_main_chat(system):
                     conversation_history=history,
                     temperature=st.session_state.get('temperature', 0.7)
                 )
+                duration = time.time() - start_time
                 
                 # Afficher la réponse
                 render_math_content(response.answer)
@@ -367,6 +388,21 @@ def render_main_chat(system):
                     "sources": response.sources,
                     "confidence": response.confidence
                 })
+
+                if system.get('metrics_collector'):
+                    system['metrics_collector'].record_latency("generate_response", duration)
+                    system['metrics_collector'].record_retrieval_quality(
+                        query=prompt,
+                        num_results=len(response.retrieved_chunks),
+                        avg_score=response.confidence
+                    )
+
+                if system.get('interaction_tracker'):
+                    system['interaction_tracker'].track_query(
+                        query=prompt,
+                        response=response.answer,
+                        retrieved_docs=len(response.retrieved_chunks)
+                    )
 
 
 def render_sources(sources, confidence):
@@ -447,7 +483,6 @@ def render_enhanced_sources_inline(sources):
         # Extract display information
         display_title = get_source_display_title(source)
         content = get_source_display_content(source)
-        score = source.get('score', 0.0)
         chunk_format = source.get('chunk_format', 'unknown')
         
         # Format indicator
@@ -469,7 +504,7 @@ def render_enhanced_sources_inline(sources):
         st.markdown(f"""
         <div class="source-card">
             <strong>[{i}] {format_indicator}</strong> {display_title}<br>
-            <small>Score: {score:.2f}</small>{contextual_info}
+            {contextual_info}
         </div>
         """, unsafe_allow_html=True)
         
@@ -491,14 +526,12 @@ def render_legacy_sources(sources):
             # Dictionary format
             name = source.get('name', source.get('filename', f'Document {i}'))
             pages = source.get('pages', [])
-            score = source.get('score', 0.0)
-            
             pages_text = f"pages {', '.join(map(str, pages))}" if pages else "page inconnue"
             
             st.markdown(f"""
             <div class="source-card">
                 <strong>[{i}]</strong> {name}<br>
-                <small>📄 {pages_text} • Score: {score:.2f}</small>
+                <small>📄 {pages_text}</small>
             </div>
             """, unsafe_allow_html=True)
         else:
