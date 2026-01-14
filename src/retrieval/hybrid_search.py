@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import numpy as np
 from rank_bm25 import BM25Okapi
 from loguru import logger
+import pickle
 
 # Import compatibility layer
 from ..storage.compatibility import compatibility_layer
@@ -87,6 +88,44 @@ class HybridSearchEngine:
         self.bm25_index = BM25Okapi(tokenized_corpus)
         
         logger.success(f"✅ Index BM25 construit: {len(documents)} documents")
+
+    def save_bm25_index(self, filepath: str):
+        """Persist BM25 index and documents to disk."""
+        if self.bm25_index is None or not self.bm25_documents:
+            logger.warning("Aucun index BM25 à sauvegarder")
+            return
+
+        try:
+            data = {
+                "documents": self.bm25_documents,
+                "tokenized_corpus": self.bm25_index.corpus
+            }
+            with open(filepath, "wb") as file:
+                pickle.dump(data, file)
+            logger.success(f"✅ Index BM25 sauvegardé: {filepath}")
+        except Exception as e:
+            logger.error(f"Erreur sauvegarde index BM25: {e}")
+
+    def load_bm25_index(self, filepath: str) -> bool:
+        """Load BM25 index and documents from disk."""
+        try:
+            with open(filepath, "rb") as file:
+                data = pickle.load(file)
+            documents = data.get("documents", [])
+            tokenized_corpus = data.get("tokenized_corpus", [])
+            if not documents or not tokenized_corpus:
+                logger.warning("Index BM25 vide ou invalide")
+                return False
+            self.bm25_documents = documents
+            self.bm25_index = BM25Okapi(tokenized_corpus)
+            logger.success(f"✅ Index BM25 chargé: {len(documents)} documents")
+            return True
+        except FileNotFoundError:
+            logger.info("Index BM25 introuvable, reconstruction nécessaire")
+            return False
+        except Exception as e:
+            logger.error(f"Erreur chargement index BM25: {e}")
+            return False
     
     def _tokenize(self, text: str) -> List[str]:
         """

@@ -61,3 +61,6 @@ htmlcov/
 
 # Streamlit
 .streamlit/
+.venv/
+venv/
+venv311/
