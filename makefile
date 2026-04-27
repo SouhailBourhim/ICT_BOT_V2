@@ -158,10 +158,16 @@ check: lint test ## Vérifie le code (lint + tests)
 health: ## Vérifie les dépendances runtime locales (ajouter --skip-* si besoin)
 	$(PYTHON) scripts/healthcheck.py
 
-backup-db: ## Sauvegarde la base de données
-	@echo "$(GREEN)Sauvegarde de la base...$(NC)"
-	tar -czf backup_db_$(shell date +%Y%m%d_%H%M%S).tar.gz database/
+backup: ## Sauvegarde les données persistantes de production
+	@echo "$(GREEN)Sauvegarde production...$(NC)"
+	scripts/backup.sh
 	@echo "$(GREEN)✅ Sauvegarde créée$(NC)"
+
+backup-db: backup ## Alias historique pour backup
+
+restore: ## Restaure une sauvegarde (RESTORE_ARCHIVE=/path/archive.tar.gz)
+	@test -n "$(RESTORE_ARCHIVE)" || (echo "$(RED)Définir RESTORE_ARCHIVE=/path/archive.tar.gz$(NC)" && exit 2)
+	scripts/restore_backup.sh "$(RESTORE_ARCHIVE)"
 
 # Infos système
 info: ## Affiche les informations système

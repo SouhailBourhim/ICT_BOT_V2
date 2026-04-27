@@ -115,9 +115,9 @@ docker-compose -f docker-compose.prod.yml up -d
 - Auto-restart
 - Security hardening
 - Read-only data mounts
-- Optional Nginx reverse proxy
+- Caddy reverse proxy with HTTPS and basic auth
 
-**Access**: http://localhost:8501 (or via Nginx on port 80)
+**Access**: https://your configured domain
 
 ---
 
@@ -411,7 +411,7 @@ docker/
 ├── entrypoint-ingestion.sh         # Ingestion startup script
 ├── docker-run.sh                   # Quick start script
 ├── .dockerignore                   # Files to exclude from build
-├── nginx.conf                      # Nginx reverse proxy config
+├── Caddyfile                       # HTTPS reverse proxy config
 └── README.md                       # Detailed Docker documentation
 ```
 
@@ -423,8 +423,9 @@ docker/
 - [ ] Set resource limits
 - [ ] Enable health checks
 - [ ] Use read-only volumes for data
-- [ ] Set up Nginx reverse proxy
-- [ ] Configure SSL/TLS certificates
+- [ ] Set up Caddy reverse proxy
+- [ ] Configure DNS for automatic HTTPS
+- [ ] Configure basic auth
 - [ ] Set up monitoring (Prometheus/Grafana)
 - [ ] Configure log aggregation
 - [ ] Set up automated backups
@@ -458,14 +459,14 @@ docker-compose -f docker-compose.ingestion.yml up
 docker-compose -f docker-compose.ingestion.yml logs ingestion
 ```
 
-### Example 3: Production with Nginx
+### Example 3: Production With HTTPS
 
 ```bash
-# Start with Nginx
-docker-compose -f docker-compose.prod.yml --profile with-nginx up -d
+# Start production stack
+docker compose --env-file ../.env -f docker-compose.prod.yml up -d --build
 
-# Access via Nginx
-open http://localhost
+# Access via Caddy
+open https://your configured domain
 ```
 
 ---
