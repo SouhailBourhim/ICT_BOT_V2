@@ -3,8 +3,8 @@
 **Projet Académique - Système de Recherche et Génération Augmentée par Récupération**
 
 ![Python](https://img.shields.io/badge/python-3.11+-blue)
-![Streamlit](https://img.shields.io/badge/streamlit-1.52.1-red)
-![ChromaDB](https://img.shields.io/badge/chromadb-1.3.5-green)
+![Streamlit](https://img.shields.io/badge/streamlit-1.29.0-red)
+![ChromaDB](https://img.shields.io/badge/chromadb-0.4.22-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
 ---
@@ -39,7 +39,7 @@ Ce projet implémente un **système RAG (Retrieval-Augmented Generation)** intel
       │                                     │
 ┌─────▼──────────────┐          ┌─────────▼─────────┐
 │  Hybrid Search     │          │   Ollama Client   │
-│  (Semantic + BM25) │          │   (Llama 3.2)     │
+│  (Semantic + BM25) │          │   (Qwen 2.5)      │
 └─────┬──────────────┘          └───────────────────┘
       │
 ┌─────▼──────────────┐
@@ -74,7 +74,7 @@ Ce projet implémente un **système RAG (Retrieval-Augmented Generation)** intel
 - **Modèles de Données** : Structures optimisées pour la recherche
 
 #### 4. **Intégration LLM** (`src/llm/`)
-- **Client Ollama** : Interface avec modèles locaux (Llama 3.2)
+- **Client Ollama** : Interface avec modèles locaux (Qwen 2.5 par défaut)
 - **Templates de Prompts** : Prompts optimisés pour l'éducation
 - **Générateur de Réponses** : Orchestration RAG complète
 
@@ -112,7 +112,7 @@ pip install -r requirements.txt
 
 # 4. Configurer Ollama
 ollama serve &
-ollama pull llama3.2:3b
+ollama pull qwen2.5:3b
 
 # 5. Initialiser la base de données
 python scripts/setup_database.py
@@ -128,7 +128,7 @@ Le fichier `.env` permet de personnaliser le comportement du système :
 
 ```bash
 # Modèle LLM
-OLLAMA_MODEL="llama3.2:3b"
+OLLAMA_MODEL="qwen2.5:3b"
 LLM_TEMPERATURE=0.1
 LLM_MAX_TOKENS=500
 
@@ -139,7 +139,7 @@ BATCH_SIZE=32
 # Recherche Hybride
 SEMANTIC_WEIGHT=0.7  # 70% recherche sémantique
 BM25_WEIGHT=0.3      # 30% recherche par mots-clés
-TOP_K_RETRIEVAL=10
+TOP_K_RETRIEVAL=7
 
 # Chunking
 CHUNK_SIZE=1000
@@ -170,7 +170,7 @@ python scripts/ingest_documents.py --stats
 ollama serve &
 
 # Lancer l'interface Streamlit
-streamlit run app/streamlit_app.py
+streamlit run app/chat.py
 ```
 
 L'application sera accessible sur `http://localhost:8501`
@@ -257,7 +257,7 @@ inpt-rag-assistant/
 │       ├── text_processing.py   # Traitement de texte
 │       └── logger.py            # Système de logs
 ├── app/                          # Interface Streamlit
-│   ├── streamlit_app.py         # Application principale
+│   ├── chat.py                  # Application principale
 │   ├── components/              # Composants UI
 │   └── pages/                   # Pages de l'interface
 ├── scripts/                      # Scripts utilitaires
@@ -283,14 +283,20 @@ inpt-rag-assistant/
 ### Tests Unitaires
 
 ```bash
+# Installer les outils de développement
+python -m pip install -r requirements-dev.txt
+
 # Lancer tous les tests
-pytest tests/ -v
+python -m pytest tests/ -v
 
 # Tests avec couverture
-pytest tests/ --cov=src --cov-report=html
+python -m pytest tests/ --cov=src --cov-report=html
 
-# Test d'un composant spécifique
-pytest tests/test_document_processing.py -v
+# Lint CI
+python -m ruff check src app tests scripts
+
+# Healthcheck local sans services externes
+python scripts/healthcheck.py --skip-streamlit --skip-ollama
 ```
 
 ### Évaluation du Système

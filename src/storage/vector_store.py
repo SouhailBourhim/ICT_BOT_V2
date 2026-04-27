@@ -10,7 +10,7 @@ try:
     from chromadb.config import Settings
     from chromadb.utils import embedding_functions
 except ImportError:
-    # Fallback to chromadb-client
+    # Fallback for older ChromaDB package layouts
     import chromadb
     Settings = chromadb.Settings if hasattr(chromadb, 'Settings') else None
     embedding_functions = chromadb.utils.embedding_functions if hasattr(chromadb, 'utils') else None

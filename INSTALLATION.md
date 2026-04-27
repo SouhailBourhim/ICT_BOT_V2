@@ -41,7 +41,7 @@ curl -fsSL https://ollama.ai/install.sh | sh
 ollama serve &
 
 # Télécharger le modèle LLM
-ollama pull llama3.2:3b
+ollama pull qwen2.5:3b
 ```
 
 #### 4. Initialisation du Système
@@ -56,7 +56,7 @@ cp .env.example .env
 #### 5. Test de l'Installation
 ```bash
 # Lancer l'application
-streamlit run app/streamlit_app.py
+streamlit run app/chat.py
 ```
 
 L'application s'ouvre automatiquement sur `http://localhost:8501`
@@ -125,12 +125,12 @@ echo "OLLAMA_MODEL=llama3.2:1b" >> .env
 
 ```bash
 # Modèle LLM (choisir selon vos ressources)
-OLLAMA_MODEL="llama3.2:3b"  # Recommandé
-# OLLAMA_MODEL="llama3.2:1b"  # Plus léger
+OLLAMA_MODEL="qwen2.5:3b"   # Recommandé pour le RAG
+# OLLAMA_MODEL="llama3.2:3b" # Alternative plus légère
 # OLLAMA_MODEL="mistral:7b"   # Plus performant
 
 # Paramètres de recherche
-TOP_K_RETRIEVAL=10
+TOP_K_RETRIEVAL=7
 SEMANTIC_WEIGHT=0.7
 BM25_WEIGHT=0.3
 

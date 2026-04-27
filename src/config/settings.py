@@ -3,12 +3,20 @@ Configuration globale du système RAG INPT
 """
 from pathlib import Path
 from typing import List
-from pydantic_settings import BaseSettings
-from pydantic import Field
+from urllib.parse import urlparse
+
+from pydantic import field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Configuration principale du système"""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+    )
     
     # Informations Projet
     PROJECT_NAME: str = "Assistant Éducatif RAG - INPT Smart ICT"
@@ -40,7 +48,7 @@ class Settings(BaseSettings):
     
     # SQLite
     SQLITE_DB_PATH: Path = DATABASE_DIR / "metadata.db"
-    SQLITE_DB_URL: str = f"sqlite:///{SQLITE_DB_PATH}"
+    SQLITE_DB_URL: str | None = None
     
     # Retrieval
     TOP_K_RETRIEVAL: int = 7  # Augmenté pour meilleur concept coverage
@@ -82,10 +90,90 @@ class Settings(BaseSettings):
     CACHE_ENABLED: bool = True
     CACHE_TTL: int = 3600  # secondes
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    @field_validator(
+        "CHUNK_SIZE",
+        "MIN_CHUNK_SIZE",
+        "EMBEDDING_DIMENSION",
+        "BATCH_SIZE",
+        "TOP_K_RETRIEVAL",
+        "RERANK_TOP_K",
+        "OLLAMA_TIMEOUT",
+        "LLM_MAX_TOKENS",
+        "MAX_CONVERSATION_HISTORY",
+        "CONTEXT_WINDOW_SIZE",
+        "MAX_WORKERS",
+        "CACHE_TTL",
+    )
+    @classmethod
+    def _must_be_positive(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("must be greater than 0")
+        return value
+
+    @field_validator("CHUNK_OVERLAP")
+    @classmethod
+    def _chunk_overlap_not_negative(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError("must be greater than or equal to 0")
+        return value
+
+    @field_validator(
+        "SIMILARITY_THRESHOLD",
+        "BM25_WEIGHT",
+        "SEMANTIC_WEIGHT",
+        "LLM_TEMPERATURE",
+    )
+    @classmethod
+    def _must_be_probability(cls, value: float) -> float:
+        if not 0 <= value <= 1:
+            raise ValueError("must be between 0 and 1")
+        return value
+
+    @field_validator("SUPPORTED_FORMATS")
+    @classmethod
+    def _formats_must_be_extensions(cls, value: List[str]) -> List[str]:
+        if not value:
+            raise ValueError("must contain at least one extension")
+        invalid = [ext for ext in value if not ext.startswith(".")]
+        if invalid:
+            raise ValueError(f"extensions must start with '.': {invalid}")
+        return value
+
+    @field_validator("OLLAMA_BASE_URL")
+    @classmethod
+    def _ollama_base_url_must_be_http(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("must be an absolute http(s) URL")
+        return value.rstrip("/")
+
+    @field_validator("LOG_LEVEL")
+    @classmethod
+    def _log_level_must_be_known(cls, value: str) -> str:
+        normalized = value.upper()
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        if normalized not in valid_levels:
+            raise ValueError(f"must be one of {sorted(valid_levels)}")
+        return normalized
+
+    @model_validator(mode="after")
+    def _validate_related_settings(self):
+        if self.CHUNK_OVERLAP >= self.CHUNK_SIZE:
+            raise ValueError("CHUNK_OVERLAP must be smaller than CHUNK_SIZE")
+
+        if self.MIN_CHUNK_SIZE > self.CHUNK_SIZE:
+            raise ValueError("MIN_CHUNK_SIZE must be smaller than or equal to CHUNK_SIZE")
+
+        if abs((self.SEMANTIC_WEIGHT + self.BM25_WEIGHT) - 1.0) > 0.001:
+            raise ValueError("SEMANTIC_WEIGHT and BM25_WEIGHT must sum to 1.0")
+
+        if self.RERANK_TOP_K > self.TOP_K_RETRIEVAL:
+            raise ValueError("RERANK_TOP_K must be smaller than or equal to TOP_K_RETRIEVAL")
+
+        if not self.SQLITE_DB_URL:
+            self.SQLITE_DB_URL = f"sqlite:///{self.SQLITE_DB_PATH}"
+
+        return self
 
 
 # Instance globale
@@ -98,6 +186,7 @@ def setup_directories():
     directories = [
         settings.DATA_DIR,
         settings.DOCUMENTS_DIR,
+        settings.DATA_DIR / "conversations",
         settings.PROCESSED_DIR,
         settings.DATABASE_DIR,
         settings.LOGS_DIR,

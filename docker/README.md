@@ -182,8 +182,8 @@ Edit `docker-compose.yml` or create `.env` file:
 ```bash
 # LLM Configuration
 OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_MODEL=llama3.2:3b
-OLLAMA_TIMEOUT=120
+OLLAMA_MODEL=qwen2.5:3b
+OLLAMA_TIMEOUT=180
 
 # Embedding Configuration
 EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2
@@ -196,8 +196,9 @@ CHUNK_OVERLAP=200
 MIN_CHUNK_SIZE=100
 
 # Retrieval Configuration
-TOP_K_RETRIEVAL=10
-SIMILARITY_THRESHOLD=0.7
+TOP_K_RETRIEVAL=7
+SIMILARITY_THRESHOLD=0.4
+RERANK_TOP_K=3
 SEMANTIC_WEIGHT=0.7
 BM25_WEIGHT=0.3
 
@@ -266,7 +267,7 @@ docker-compose exec rag-app python scripts/ingest_documents.py data/documents --
 docker-compose exec ollama ollama list
 
 # Pull a new model
-docker-compose exec ollama ollama pull llama3.2:3b
+docker-compose exec ollama ollama pull qwen2.5:3b
 
 # Remove a model
 docker-compose exec ollama ollama rm llama3.2:1b

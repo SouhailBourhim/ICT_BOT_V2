@@ -98,7 +98,7 @@ class DocumentIngestion:
             
             # 3. Génération d'embeddings
             texts = []
-            for chunk in chunks:
+            for i, chunk in enumerate(chunks):
                 # Extract text from chunk (handle both old and new formats)
                 if hasattr(chunk, 'content'):
                     texts.append(chunk.content)  # EnhancedChunk format

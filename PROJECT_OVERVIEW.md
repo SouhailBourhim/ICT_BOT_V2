@@ -15,7 +15,7 @@ Documents PDF/TXT → Traitement → Base Vectorielle → Recherche → LLM → 
 1. **Interface Web** (Streamlit) - Interface utilisateur intuitive
 2. **Moteur de Recherche** - Recherche hybride sémantique + mots-clés  
 3. **Base Vectorielle** (ChromaDB) - Stockage des embeddings
-4. **LLM Local** (Ollama/Llama) - Génération de réponses
+4. **LLM Local** (Ollama/Qwen) - Génération de réponses
 5. **Pipeline de Documents** - Traitement multi-format
 
 ## 📊 Métriques de Performance
@@ -30,7 +30,7 @@ Documents PDF/TXT → Traitement → Base Vectorielle → Recherche → LLM → 
 ```bash
 # 1. Installation
 pip install -r requirements.txt
-ollama pull llama3.2:3b
+ollama pull qwen2.5:3b
 
 # 2. Initialisation
 python scripts/setup_database.py
@@ -40,7 +40,7 @@ cp cours/*.pdf data/documents/
 python scripts/ingest_documents.py data/documents --recursive
 
 # 4. Lancement
-streamlit run app/streamlit_app.py
+streamlit run app/chat.py
 ```
 
 ## 🎓 Cas d'Usage Éducatifs
@@ -55,10 +55,10 @@ streamlit run app/streamlit_app.py
 | Composant | Technologie | Version |
 |-----------|-------------|---------|
 | Backend | Python | 3.11+ |
-| Interface | Streamlit | 1.52.1 |
-| Base Vectorielle | ChromaDB | 1.3.5 |
-| LLM | Ollama/Llama | 3.2:3b |
-| Embeddings | Sentence Transformers | 5.1.2 |
+| Interface | Streamlit | 1.29.0 |
+| Base Vectorielle | ChromaDB | 0.4.22 |
+| LLM | Ollama/Qwen | 2.5:3b |
+| Embeddings | Sentence Transformers | 2.7.0 |
 
 ## 📁 Structure Essentielle
 
