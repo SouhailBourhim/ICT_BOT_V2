@@ -38,12 +38,17 @@ COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY .env.example .env
 
-# Create necessary directories
-RUN mkdir -p data/documents data/processed database/chroma_db logs
+# Create a non-root runtime user and writable directories
+RUN groupadd --system app && \
+    useradd --system --gid app --home-dir /app app && \
+    mkdir -p data/documents data/conversations data/processed database/chroma_db logs && \
+    chown -R app:app /app
 
 # Entrypoint for ingestion
 COPY docker/entrypoint-ingestion.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+USER app
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "scripts/ingest_documents.py", "data/documents", "--recursive"]

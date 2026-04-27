@@ -22,6 +22,7 @@ wheels/
 
 # Virtual Environment
 venv/
+venv*/
 env/
 ENV/
 
@@ -37,11 +38,13 @@ ENV/
 
 # Data & Databases
 data/documents/*
+data/conversations/*
 data/processed/*
 data/embeddings/*
 database/chroma_db/*
 database/*.db
 !data/documents/.gitkeep
+!data/conversations/.gitkeep
 !data/processed/.gitkeep
 !data/embeddings/.gitkeep
 
@@ -57,6 +60,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+.mypy_cache/
+.ruff_cache/
 
 # Streamlit
 .streamlit/

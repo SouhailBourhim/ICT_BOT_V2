@@ -1,11 +1,11 @@
-.PHONY: help install setup run ingest clean test docker-up docker-down
+.PHONY: help install install-dev setup run ingest clean test lint check health docker-up docker-down
 
 # Variables
 PYTHON := python3
 PIP := pip3
 VENV := venv
 STREAMLIT := streamlit
-OLLAMA_MODEL := llama3.2:3b
+OLLAMA_MODEL := qwen2.5:3b
 
 # Couleurs pour l'affichage
 GREEN := \033[0;32m
@@ -20,10 +20,16 @@ help: ## Affiche cette aide
 
 install: ## Installe les dépendances Python
 	@echo "$(GREEN)Installation des dépendances...$(NC)"
-	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements.txt
+	$(PYTHON) -m pip install --upgrade pip
+	$(PYTHON) -m pip install -r requirements.txt
 	$(PYTHON) -m spacy download fr_core_news_md
 	@echo "$(GREEN)✅ Dépendances installées$(NC)"
+
+install-dev: ## Installe les dépendances de développement et CI
+	@echo "$(GREEN)Installation des dépendances de développement...$(NC)"
+	$(PYTHON) -m pip install --upgrade pip
+	$(PYTHON) -m pip install -r requirements-dev.txt
+	@echo "$(GREEN)✅ Dépendances de développement installées$(NC)"
 
 setup: install ## Setup complet du projet (install + init)
 	@echo "$(GREEN)Initialisation du projet...$(NC)"
@@ -79,16 +85,16 @@ reset-db: ## Réinitialise la base de données (⚠️ DESTRUCTIF)
 
 test: ## Lance les tests
 	@echo "$(GREEN)Lancement des tests...$(NC)"
-	pytest tests/ -v
+	$(PYTHON) -m pytest tests/ -v
 
 test-cov: ## Lance les tests avec couverture
 	@echo "$(GREEN)Tests avec couverture...$(NC)"
 	pytest tests/ --cov=src --cov-report=html --cov-report=term
 	@echo "$(GREEN)Rapport disponible dans: htmlcov/index.html$(NC)"
 
-lint: ## Vérifie le code avec flake8
+lint: ## Vérifie le code avec Ruff
 	@echo "$(GREEN)Vérification du code...$(NC)"
-	flake8 src/ app/ tests/ --max-line-length=120
+	$(PYTHON) -m ruff check src app tests scripts
 
 format: ## Formate le code avec black
 	@echo "$(GREEN)Formatage du code...$(NC)"
@@ -139,7 +145,7 @@ logs: ## Affiche les logs de l'application
 	tail -f logs/*.log
 
 dev: ## Mode développement (rechargement auto)
-	$(STREAMLIT) run app/streamlit_app.py --server.runOnSave=true
+	$(STREAMLIT) run app/chat.py --server.runOnSave=true
 
 all: setup ollama-pull ingest run ## Installation complète et lancement
 
@@ -148,6 +154,9 @@ watch-logs: ## Surveille les logs en temps réel
 	watch -n 2 'tail -n 50 logs/ingestion_*.log'
 
 check: lint test ## Vérifie le code (lint + tests)
+
+health: ## Vérifie les dépendances runtime locales (ajouter --skip-* si besoin)
+	$(PYTHON) scripts/healthcheck.py
 
 backup-db: ## Sauvegarde la base de données
 	@echo "$(GREEN)Sauvegarde de la base...$(NC)"

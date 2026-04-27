@@ -1,7 +1,7 @@
 """
 Générateur de réponses RAG combinant recherche et LLM
 """
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 import re
 from loguru import logger
@@ -30,7 +30,8 @@ class ResponseGenerator:
         prompt_builder,
         min_confidence: float = 0.5,
         max_sources: int = 3,
-        top_k_retrieval: int = 5
+        top_k_retrieval: int = 5,
+        max_tokens: int = 500
     ):
         """
         Initialise le générateur de réponses
@@ -42,6 +43,7 @@ class ResponseGenerator:
             min_confidence: Score minimum pour utiliser un chunk
             max_sources: Nombre max de sources dans la réponse
             top_k_retrieval: Nombre de chunks à récupérer
+            max_tokens: Nombre maximum de tokens générés par le LLM
         """
         self.hybrid_search = hybrid_search
         self.ollama_client = ollama_client
@@ -49,6 +51,7 @@ class ResponseGenerator:
         self.min_confidence = min_confidence
         self.max_sources = max_sources
         self.top_k_retrieval = top_k_retrieval
+        self.max_tokens = max_tokens
         
         logger.info("ResponseGenerator initialisé")
     
@@ -199,7 +202,7 @@ class ResponseGenerator:
                     prompt=user_prompt,
                     system=system_prompt,
                     temperature=temperature,
-                    max_tokens=2000
+                    max_tokens=self.max_tokens
                 )
             
             logger.success("✅ Réponse générée")
@@ -361,6 +364,7 @@ class ResponseGenerator:
             prompt=user,
             system=system,
             temperature=temperature,
+            max_tokens=self.max_tokens,
             stream=False
         )
     

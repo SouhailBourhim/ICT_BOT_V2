@@ -1,8 +1,8 @@
 """Retriever BM25 pour la recherche par mots-clés"""
 from typing import List, Dict, Any
+import re
+
 from rank_bm25 import BM25Okapi
-import nltk
-from nltk.tokenize import word_tokenize
 
 
 class BM25Retriever:
@@ -12,12 +12,6 @@ class BM25Retriever:
         self.corpus = []
         self.documents = []
         self.bm25 = None
-        
-        # Télécharger les ressources NLTK si nécessaire
-        try:
-            nltk.data.find('tokenizers/punkt')
-        except LookupError:
-            nltk.download('punkt')
     
     def index(self, documents: List[Dict[str, Any]]):
         """Indexe les documents pour BM25"""
@@ -46,4 +40,4 @@ class BM25Retriever:
     
     def _tokenize(self, text: str) -> List[str]:
         """Tokenize le texte"""
-        return word_tokenize(text.lower())
+        return re.findall(r"\b\w{2,}\b", text.lower())

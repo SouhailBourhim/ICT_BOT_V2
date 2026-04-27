@@ -10,7 +10,9 @@ LABEL version="1.0.0"
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    STREAMLIT_SERVER_PORT=8501 \
+    STREAMLIT_SERVER_ADDRESS=0.0.0.0
 
 # Répertoire de travail
 WORKDIR /app
@@ -38,19 +40,24 @@ RUN python -c "import nltk; nltk.download('punkt', quiet=True)"
 # Copie du code source
 COPY . .
 
-# Création des dossiers nécessaires
-RUN mkdir -p data/documents data/processed database/chroma_db logs
+# Création d'un utilisateur non-root et des dossiers nécessaires
+RUN groupadd --system app && \
+    useradd --system --gid app --home-dir /app app && \
+    mkdir -p data/documents data/conversations data/processed database/chroma_db logs && \
+    chown -R app:app /app
 
 # Port Streamlit
 EXPOSE 8501
 
 # Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python scripts/healthcheck.py --timeout 3 || exit 1
 
 # Script de démarrage
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+USER app
+
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["streamlit", "run", "app/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "app/chat.py", "--server.port=8501", "--server.address=0.0.0.0"]

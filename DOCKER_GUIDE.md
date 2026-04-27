@@ -168,7 +168,7 @@ Create `.env` file in docker directory:
 
 ```bash
 # LLM Settings
-OLLAMA_MODEL=llama3.2:3b
+OLLAMA_MODEL=qwen2.5:3b
 OLLAMA_BASE_URL=http://ollama:11434
 
 # Embedding Settings
@@ -180,7 +180,9 @@ CHUNK_SIZE=1000
 CHUNK_OVERLAP=200
 
 # Retrieval Settings
-TOP_K_RETRIEVAL=10
+TOP_K_RETRIEVAL=7
+SIMILARITY_THRESHOLD=0.4
+RERANK_TOP_K=3
 SEMANTIC_WEIGHT=0.7
 BM25_WEIGHT=0.3
 

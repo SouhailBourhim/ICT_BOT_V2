@@ -182,7 +182,8 @@ def initialize_system():
             prompt_builder=prompt_builder,
             min_confidence=settings.SIMILARITY_THRESHOLD,
             max_sources=settings.RERANK_TOP_K,
-            top_k_retrieval=settings.TOP_K_RETRIEVAL
+            top_k_retrieval=settings.TOP_K_RETRIEVAL,
+            max_tokens=settings.LLM_MAX_TOKENS
         )
         
         # 7. Conversation Manager
@@ -330,6 +331,10 @@ def render_main_chat(system):
                 )
                 
                 # Générer la réponse
+                system['response_gen'].max_sources = st.session_state.get(
+                    'top_k',
+                    settings.RERANK_TOP_K
+                )
                 response = system['response_gen'].generate_response(
                     question=prompt,
                     conversation_history=history,
@@ -355,7 +360,8 @@ def render_main_chat(system):
                     content=response.answer,
                     metadata={
                         'confidence': response.confidence,
-                        'num_sources': len(response.sources)
+                        'num_sources': len(response.sources),
+                        'sources': response.sources
                     },
                     conversation_id=st.session_state.current_conv_id
                 )
@@ -587,7 +593,7 @@ def main():
         Assurez-vous que:
         1. Ollama est installé: `curl -fsSL https://ollama.ai/install.sh | sh`
         2. Le service est lancé: `ollama serve`
-        3. Le modèle est téléchargé: `ollama pull llama3.2:3b`
+        3. Le modèle est téléchargé: `ollama pull qwen2.5:3b`
         """)
         st.stop()
     

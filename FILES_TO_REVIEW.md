@@ -88,7 +88,7 @@ src/                          # Code source principal
     └── models.py            # Modèles de données
 
 app/                         # Interface utilisateur
-├── streamlit_app.py         # Application principale
+├── chat.py                  # Application principale
 └── components/              # Composants UI
 
 scripts/                     # Scripts utilitaires
@@ -110,7 +110,7 @@ docker/                      # Configuration Docker
 4. **src/llm/prompt_templates.py** - Prompts optimisés
 
 ### Interface Utilisateur
-5. **app/streamlit_app.py** - Application web principale
+5. **app/chat.py** - Application web principale
 6. **app/components/chat_interface.py** - Interface de chat
 
 ### Traitement de Documents
@@ -135,7 +135,7 @@ docker/                      # Configuration Docker
 2. **ACADEMIC_SUMMARY.md** - Contexte académique
 3. **src/retrieval/hybrid_search.py** - Architecture technique
 4. **src/llm/response_generator.py** - Logique RAG
-5. **app/streamlit_app.py** - Interface utilisateur
+5. **app/chat.py** - Interface utilisateur
 6. **EVALUATION_REPORT.md** - Performance et métriques
 
 ### Pour Tester le Système (30 min)

@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+venv*/
+env/
+ENV/
+
+# Git and local tooling
+.git/
+.github/
+.gitignore
+.dockerignore
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime data mounted as volumes
+data/documents/*
+data/conversations/*
+data/processed/*
+data/embeddings/*
+database/
+logs/
+*.log
+interactions.jsonl
+
+# Local config and OS/editor noise
+.env
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test and evaluation artifacts
+tests/
+*.md
+!README.md
