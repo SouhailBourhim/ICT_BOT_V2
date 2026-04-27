@@ -3,15 +3,18 @@ set -e
 
 echo "🚀 Démarrage de l'Assistant RAG INPT..."
 
+OLLAMA_URL="${OLLAMA_BASE_URL:-http://ollama:11434}"
+OLLAMA_URL="${OLLAMA_URL%/}"
+
 # Attendre qu'Ollama soit disponible
 echo "⏳ Attente du service Ollama..."
 max_retries=30
 counter=0
 
-while ! curl -s http://ollama:11434/api/tags > /dev/null; do
+while ! curl -s "$OLLAMA_URL/api/tags" > /dev/null; do
     counter=$((counter + 1))
     if [ $counter -gt $max_retries ]; then
-        echo "❌ Impossible de se connecter à Ollama après $max_retries tentatives"
+        echo "❌ Impossible de se connecter à Ollama ($OLLAMA_URL) après $max_retries tentatives"
         exit 1
     fi
     echo "  Tentative $counter/$max_retries..."
@@ -22,12 +25,12 @@ echo "✅ Ollama est prêt!"
 
 # Vérifier si le modèle est disponible
 echo "🔍 Vérification du modèle LLM..."
-if ! curl -s http://ollama:11434/api/tags | grep -q "$OLLAMA_MODEL"; then
+if ! curl -s "$OLLAMA_URL/api/tags" | grep -q "$OLLAMA_MODEL"; then
     echo "⚠️  Modèle $OLLAMA_MODEL non trouvé"
     echo "📥 Téléchargement du modèle (cela peut prendre quelques minutes)..."
     
     # Télécharger le modèle
-    curl -X POST http://ollama:11434/api/pull \
+    curl -X POST "$OLLAMA_URL/api/pull" \
         -H "Content-Type: application/json" \
         -d "{\"name\": \"$OLLAMA_MODEL\"}" || {
         echo "❌ Échec du téléchargement du modèle"
@@ -56,7 +59,7 @@ fi
 echo ""
 echo "📊 Configuration:"
 echo "  - Modèle LLM: $OLLAMA_MODEL"
-echo "  - URL Ollama: $OLLAMA_BASE_URL"
+echo "  - URL Ollama: $OLLAMA_URL"
 echo "  - Port Streamlit: 8501"
 echo "  - Log level: $LOG_LEVEL"
 echo ""

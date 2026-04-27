@@ -1,5 +1,4 @@
 # Production Docker Compose Configuration
-version: '3.8'
 
 services:
   # Ollama LLM Service
@@ -7,7 +6,7 @@ services:
     image: ollama/ollama:latest
     container_name: inpt-ollama-prod
     ports:
-      - "11434:11434"
+      - "127.0.0.1:11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     environment:
@@ -39,7 +38,7 @@ services:
         - BUILD_ENV=production
     container_name: inpt-rag-app-prod
     ports:
-      - "8501:8501"
+      - "127.0.0.1:8501:8501"
     volumes:
       - ../data:/app/data
       - ../database:/app/database
@@ -47,18 +46,18 @@ services:
       - app_cache:/app/.cache
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=qwen2.5:3b
-      - EMBEDDING_MODEL=paraphrase-multilingual-MiniLM-L12-v2
-      - CHUNK_SIZE=1000
-      - CHUNK_OVERLAP=200
-      - TOP_K_RETRIEVAL=7
-      - SIMILARITY_THRESHOLD=0.4
-      - RERANK_TOP_K=3
-      - LLM_TEMPERATURE=0.1
-      - LLM_MAX_TOKENS=500
-      - SEMANTIC_WEIGHT=0.7
-      - BM25_WEIGHT=0.3
-      - LOG_LEVEL=INFO
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:3b}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-paraphrase-multilingual-MiniLM-L12-v2}
+      - CHUNK_SIZE=${CHUNK_SIZE:-1000}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-200}
+      - TOP_K_RETRIEVAL=${TOP_K_RETRIEVAL:-7}
+      - SIMILARITY_THRESHOLD=${SIMILARITY_THRESHOLD:-0.4}
+      - RERANK_TOP_K=${RERANK_TOP_K:-3}
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.1}
+      - LLM_MAX_TOKENS=${LLM_MAX_TOKENS:-500}
+      - SEMANTIC_WEIGHT=${SEMANTIC_WEIGHT:-0.7}
+      - BM25_WEIGHT=${BM25_WEIGHT:-0.3}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - PYTHONUNBUFFERED=1
       - STREAMLIT_SERVER_MAX_UPLOAD_SIZE=200
       - STREAMLIT_SERVER_ENABLE_CORS=false
@@ -82,26 +81,41 @@ services:
       retries: 5
       start_period: 60s
 
-  # Nginx Reverse Proxy (Optional)
-  nginx:
-    image: nginx:alpine
-    container_name: inpt-nginx
+  # Public HTTPS reverse proxy with basic auth
+  caddy:
+    image: caddy:2-alpine
+    container_name: inpt-caddy-prod
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - APP_DOMAIN=${APP_DOMAIN:?Set APP_DOMAIN in your production environment}
+      - ACME_EMAIL=${ACME_EMAIL:?Set ACME_EMAIL in your production environment}
+      - BASIC_AUTH_USER=${BASIC_AUTH_USER:?Set BASIC_AUTH_USER in your production environment}
+      - BASIC_AUTH_HASH=${BASIC_AUTH_HASH:?Set BASIC_AUTH_HASH in your production environment}
     depends_on:
-      - rag-app
+      rag-app:
+        condition: service_healthy
     restart: always
-    profiles:
-      - with-nginx
+    healthcheck:
+      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
 volumes:
   ollama_data:
     driver: local
   app_cache:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
     driver: local
 
 networks:

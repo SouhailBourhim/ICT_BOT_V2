@@ -47,6 +47,7 @@ database/*.db
 !data/conversations/.gitkeep
 !data/processed/.gitkeep
 !data/embeddings/.gitkeep
+backups/
 
 # Logs
 *.log

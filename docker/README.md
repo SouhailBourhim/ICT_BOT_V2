@@ -89,20 +89,17 @@ docker-compose down -v
 ```bash
 cd docker
 
-# Start production services
-docker-compose -f docker-compose.prod.yml up -d
-
-# With Nginx reverse proxy
-docker-compose -f docker-compose.prod.yml --profile with-nginx up -d
+# Start production services with HTTPS reverse proxy
+docker compose --env-file ../.env -f docker-compose.prod.yml up -d --build
 
 # Check status
-docker-compose -f docker-compose.prod.yml ps
+docker compose --env-file ../.env -f docker-compose.prod.yml ps
 
 # View logs
-docker-compose -f docker-compose.prod.yml logs -f
+docker compose --env-file ../.env -f docker-compose.prod.yml logs -f
 
 # Stop services
-docker-compose -f docker-compose.prod.yml down
+docker compose --env-file ../.env -f docker-compose.prod.yml down
 ```
 
 ### Production Features
@@ -112,7 +109,10 @@ docker-compose -f docker-compose.prod.yml down
 - ✅ Auto-restart policies
 - ✅ Read-only data mounts
 - ✅ Security hardening
-- ✅ Optional Nginx reverse proxy
+- ✅ Caddy reverse proxy with automatic HTTPS
+- ✅ Basic auth at the public edge
+
+See `../PRODUCTION_DEPLOYMENT.md` for the full VPS checklist, auth hash generation, backups, and update workflow.
 
 ---
 
@@ -379,8 +379,9 @@ services:
 - [ ] Use `docker-compose.prod.yml`
 - [ ] Set read-only volumes for data
 - [ ] Enable XSRF protection
-- [ ] Use Nginx reverse proxy
-- [ ] Set up SSL/TLS certificates
+- [ ] Use Caddy reverse proxy
+- [ ] Set up DNS for automatic HTTPS
+- [ ] Set up basic auth
 - [ ] Limit resource usage
 - [ ] Enable health checks
 - [ ] Use secrets for sensitive data
@@ -464,7 +465,7 @@ docker/
 ├── entrypoint.sh                   # App entrypoint
 ├── entrypoint-ingestion.sh         # Ingestion entrypoint
 ├── .dockerignore                   # Files to exclude
-├── nginx.conf                      # Nginx config (optional)
+├── Caddyfile                       # HTTPS reverse proxy config
 └── README.md                       # This file
 ```
 
