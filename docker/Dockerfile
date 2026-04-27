@@ -1,4 +1,32 @@
 # Dockerfile pour l'Assistant RAG INPT
+FROM python:3.11-slim AS builder
+
+# Variables d'environnement
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    NLTK_DATA=/opt/nltk_data
+
+# Répertoire de travail
+WORKDIR /app
+
+# Dépendances de build uniquement
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copie des requirements
+COPY requirements.txt .
+
+# Installation des dépendances Python dans un venv copiable
+RUN python -m venv /opt/venv && \
+    /opt/venv/bin/pip install --upgrade pip && \
+    /opt/venv/bin/pip install -r requirements.txt && \
+    mkdir -p "$NLTK_DATA" && \
+    /opt/venv/bin/python -c "import nltk; nltk.download('punkt', download_dir='$NLTK_DATA', quiet=True)"
+
 FROM python:3.11-slim
 
 # Métadonnées
@@ -11,31 +39,25 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PATH=/opt/venv/bin:$PATH \
+    NLTK_DATA=/opt/nltk_data \
     STREAMLIT_SERVER_PORT=8501 \
     STREAMLIT_SERVER_ADDRESS=0.0.0.0
 
 # Répertoire de travail
 WORKDIR /app
 
-# Installation des dépendances système
-RUN apt-get update && apt-get install -y \
-    build-essential \
+# Installation des dépendances système runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    git \
     poppler-utils \
     tesseract-ocr \
     tesseract-ocr-fra \
     && rm -rf /var/lib/apt/lists/*
 
-# Copie des requirements
-COPY requirements.txt .
-
-# Installation des dépendances Python
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
-
-# Téléchargement des données NLTK
-RUN python -c "import nltk; nltk.download('punkt', quiet=True)"
+# Copie de l'environnement Python préparé
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /opt/nltk_data /opt/nltk_data
 
 # Copie du code source
 COPY . .
